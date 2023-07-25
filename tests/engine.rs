@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod db_test {
-    use buck::{engine::BuckDB, types::BuckTypes, errors::BuckEngineError};
+    use buck::{engine::BuckDB, types::BuckTypes, errors::BuckEngineError, log::BuckLog};
 
     #[test]
     fn test_insert_remove() {
@@ -14,7 +14,7 @@ mod db_test {
         let new_value = BuckTypes::String("new_value".to_string());
         let result = db.update(key, new_value).unwrap();
 
-        assert_eq!(result, "[Success] Updated value: String(\"new_value\")");
+        assert_eq!(result, BuckLog::UpdateOk(key.to_string()));
 
         db.remove(key).unwrap();
 
@@ -34,7 +34,7 @@ mod db_test {
         let new_value = BuckTypes::String("new_value".to_string());
         let result = db.update(key, new_value).unwrap();
 
-        assert_eq!(result, "[Success] Updated value: String(\"new_value\")");
+        assert_eq!(result, BuckLog::UpdateOk(key.to_string()));
     }
 
     #[test]

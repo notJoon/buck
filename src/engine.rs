@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::{types::BuckTypes, errors::BuckEngineError};
+use crate::{types::BuckTypes, errors::BuckEngineError, log::BuckLog};
 
 #[derive(Debug)]
 pub struct BuckDB {
@@ -15,10 +15,10 @@ impl BuckDB {
     }
 
     /// Insert a key-value pair into the database.
-    pub fn insert(&mut self, key: String, value: BuckTypes) -> String {
+    pub fn insert(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, ()> {
         self.data.insert(key.to_owned(), value);
 
-        format!("{key} inserted into database")
+        Ok(BuckLog::InsertOk(key.to_owned()))
     }
 
     /// Get a value from the database.
@@ -30,25 +30,25 @@ impl BuckDB {
     }
 
     /// Remove a value from the database.
-    pub fn remove(&mut self, key: &str) -> Result<String, BuckEngineError> {
+    pub fn remove(&mut self, key: &str) -> Result<BuckLog, BuckEngineError> {
         match self.data.get(key) {
             Some(_) => {
                 self.data.remove(key);
 
-                Ok(format!("[Success] Removed value: {:?}", key.to_string()))
+                Ok(BuckLog::RemoveOk(key.to_string()))
             },
             None => Err(BuckEngineError::KeyNotFound(key.to_string()))
         }
     }
 
     /// Update a value in the database.
-    pub fn update(&mut self, key: &str, value: BuckTypes) -> Result<String, BuckEngineError> {
+    pub fn update(&mut self, key: &str, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
 
         match self.data.get(key) {
             Some(_) => {
                 self.data.insert(key.to_string(), value);
 
-                Ok(format!("[Success] Updated value: {:?}", self.data.get(key).unwrap()))
+                Ok(BuckLog::UpdateOk(key.to_string()))
             },
             None => Err(BuckEngineError::KeyNotFound(key.to_string()))
         }
