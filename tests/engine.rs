@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod db_test {
-    use buck::{engine::BuckDB, types::BuckTypes};
+    use buck::{engine::BuckDB, types::BuckTypes, errors::BuckEngineError};
 
     #[test]
-    fn insert_remove() {
+    fn test_insert_remove() {
         let mut db = BuckDB::new();
 
         let key = "test";
@@ -12,18 +12,19 @@ mod db_test {
         db.insert(key.to_string(), value);
 
         let new_value = BuckTypes::String("new_value".to_string());
+        let result = db.update(key, new_value).unwrap();
 
-        let result = db.update(key, new_value);
+        assert_eq!(result, "[Success] Updated value: String(\"new_value\")");
 
-        assert_eq!(result, "Updated value: String(\"new_value\")");
+        db.remove(key).unwrap();
 
-        db.remove(key);
+        let result = db.get(key);
 
-        assert_eq!(db.get(key), None);
+        assert_eq!(result, Err(BuckEngineError::KeyNotFound("test".to_string())));
     }
 
     #[test]
-    fn insert_update_remove() {
+    fn test_insert_update_remove() {
         let mut db = BuckDB::new();
 
         let (key, value) = ("test", BuckTypes::String("test".to_string()));
@@ -31,23 +32,21 @@ mod db_test {
         db.insert(key.to_string(), value);
 
         let new_value = BuckTypes::String("new_value".to_string());
-        let result = db.update(key, new_value);
+        let result = db.update(key, new_value).unwrap();
 
-        assert_eq!(result, "Updated value: String(\"new_value\")");
-
-        db.remove(key);
+        assert_eq!(result, "[Success] Updated value: String(\"new_value\")");
     }
 
     #[test]
-    fn get() {
+    fn test_get() {
         let mut db = BuckDB::new();
 
         let (key, value) = ("test", BuckTypes::String("test".to_string()));
 
         db.insert(key.to_string(), value);
 
-        let result = db.get(key);
+        let result = db.get(key).unwrap();
 
-        assert_eq!(result, Some(&BuckTypes::String("test".to_string())));
+        assert_eq!(result, &BuckTypes::String("test".to_string()));
     }
 }
