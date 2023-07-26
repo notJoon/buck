@@ -8,6 +8,7 @@ pub enum BuckLog {
     UpdateOk(String),
     TransactionOk,
     RollbackOk,
+    BackupOk,
 }
 
 impl fmt::Display for BuckLog {
@@ -19,6 +20,7 @@ impl fmt::Display for BuckLog {
             BuckLog::UpdateOk(key) => write!(f, "[log] {key} updated in database"),
             BuckLog::TransactionOk => write!(f, "[log] Transaction committed"),
             BuckLog::RollbackOk => write!(f, "[log] Transaction rolled back"),
+            BuckLog::BackupOk => write!(f, "[Success] Database backed up"),
         }
     }
 }
