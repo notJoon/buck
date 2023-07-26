@@ -20,6 +20,6 @@ fn main() {
             break;
         }
 
-        println!("Unrecognized command '{}'.", input)
+        println!("Unrecognized command '{}'.\n", input)
     }
 }
