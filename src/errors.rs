@@ -6,6 +6,7 @@ pub enum BuckEngineError {
     InvalidType,
     AlreadyCommitted,
     NoBackup,
+    AbortError,
 }
 
 impl fmt::Display for BuckEngineError {
@@ -15,6 +16,7 @@ impl fmt::Display for BuckEngineError {
             BuckEngineError::InvalidType => write!(f, "[Error] Invalid type"),
             BuckEngineError::AlreadyCommitted => write!(f, "[Error] Transaction already committed"),
             BuckEngineError::NoBackup => write!(f, "[Error] No backup"),
+            BuckEngineError::AbortError => write!(f, "[Error] Abort failed"),
         }
     }
 }
