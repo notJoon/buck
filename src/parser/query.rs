@@ -3,6 +3,8 @@ use crate::types::BuckTypes;
 #[derive(Debug, PartialEq)]
 pub enum BuckQuery {
     Get(Vec<String>),
-    Set(String, BuckTypes),
+    Insert(String, BuckTypes),
+    Update(String, BuckTypes),
+    Remove(Vec<String>),
     Unknown,
 }
