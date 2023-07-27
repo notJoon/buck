@@ -1,13 +1,13 @@
 use std::io::{self, Write};
 
 use ansi_term::Color;
-use buck::engine::BuckDB;
+use buck::{engine::BuckDB, parser::parse::parse_query};
 
 fn main() {
     let mut db = BuckDB::new();
 
+    println!("Enter 'exit' to quit.");
     loop {
-        println!("Enter 'exit' to quit.");
         print!("{} ", Color::Green.paint("buck>"));
         io::stdout().flush().unwrap();
 
@@ -16,10 +16,22 @@ fn main() {
 
         let input = input.trim();
 
-        if input == "exit" {
-            break;
-        }
+        match parse_query(input) {
+            Ok(query) => {
+                let log = query.execute(input, &mut db).unwrap();
+                println!("{}", log);
+            }
+            Err(e) => {
+                println!("{}", e);
+            }
+        };
 
-        println!("Unrecognized command '{}'.\n", input)
+        match input {
+            "exit" => break,
+            "clear" => {
+                print!("{}[2J", 27 as char);
+            }
+            _ => {}
+        }
     }
 }

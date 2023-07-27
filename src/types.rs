@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::fmt;
 
 use crate::parser::errors::BuckParserError;
 use crate::parser::parse::get_value_type;
@@ -47,4 +48,32 @@ pub fn parse_sets(set_input: &str) -> Result<HashSet<String>, BuckParserError> {
         .collect::<HashSet<String>>();
 
     Ok(set)
+}
+
+impl fmt::Display for BuckTypes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BuckTypes::Integer(ival) => write!(f, "{}", ival),
+            BuckTypes::Float(fval) => write!(f, "{}", fval),
+            BuckTypes::Boolean(bval) => write!(f, "{}", bval),
+            BuckTypes::String(sval) => write!(f, "{}", sval),
+            BuckTypes::Hash(hval) => {
+                let mut hash_string = String::new();
+                for (key, value) in hval {
+                    hash_string.push_str(&format!("{}:{},", key, value));
+                }
+
+                write!(f, "{}", hash_string)
+            }
+            BuckTypes::Sets(sval) => {
+                let mut set_string = String::new();
+                for value in sval {
+                    set_string.push_str(&format!("{},", value));
+                }
+
+                write!(f, "{}", set_string)
+            }
+            BuckTypes::Unknown(uval) => write!(f, "{}", uval),
+        }
+    }
 }

@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::types::{BuckTypes, parse_hash, parse_sets};
+use crate::{types::{BuckTypes, parse_hash, parse_sets}, engine::BuckDB};
 
 use super::{errors::BuckParserError, query::BuckQuery};
 
