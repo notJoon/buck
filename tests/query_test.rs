@@ -26,6 +26,14 @@ mod query_tests {
         let result = parse_query(query);
         assert_eq!(result, Ok(Set("key".to_string(), BuckTypes::Boolean(true))));
 
+        let query = "SET key True";
+        let result = parse_query(query);
+        assert_eq!(result, Ok(Set("key".to_string(), BuckTypes::Unknown("True".to_string()))));
+
+        let query = "SET key True True";
+        let result = parse_query(query);
+        assert_eq!(result, Ok(Set("key".to_string(), BuckTypes::Unknown("True True".to_string()))));
+
         let query = "SET key false";
         let result = parse_query(query);
         assert_eq!(result, Ok(Set("key".to_string(), BuckTypes::Boolean(false))));
@@ -33,6 +41,10 @@ mod query_tests {
         let query = "SET key \"test\"";
         let result = parse_query(query);
         assert_eq!(result, Ok(Set("key".to_string(), BuckTypes::String("test".to_string()))));
+
+        let query = "SET key \"FOO BAR BAZ\"";
+        let result = parse_query(query);
+        assert_eq!(result, Ok(Set("key".to_string(), BuckTypes::String("FOO BAR BAZ".to_string()))));
 
         let query = "SET key \"foo bar baz\"";
         let result = parse_query(query);

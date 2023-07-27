@@ -19,8 +19,7 @@ pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
         return Ok(BuckTypes::Float(fval));
     }
 
-    // TODO: what if string value contains UpperCase? how to handle this?
-    match value.to_lowercase().as_str() {
+    match value {
         "true" => return Ok(BuckTypes::Boolean(true)),
         "false" => return Ok(BuckTypes::Boolean(false)),
         // string value must be wrapped in double quotes
