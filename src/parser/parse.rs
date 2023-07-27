@@ -1,6 +1,6 @@
 use crate::types::BuckTypes;
 
-use super::{query::BuckQuery, errors::BuckParserError};
+use super::{errors::BuckParserError, query::BuckQuery};
 
 pub type BuckParserResult = Result<BuckQuery, BuckParserError>;
 
@@ -25,7 +25,7 @@ pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
         // string value must be wrapped in double quotes
         _ => {
             if value.starts_with('"') && value.ends_with('"') {
-                return Ok(BuckTypes::String(value[1..value.len()-1].to_string()));
+                return Ok(BuckTypes::String(value[1..value.len() - 1].to_string()));
             }
         }
     }
@@ -34,25 +34,30 @@ pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
 }
 
 pub fn parse_query(query: &str) -> BuckParserResult {
-    let parts: Vec<&str> = query.splitn(3, ' ').collect();
+    let parts: Vec<&str> = query.splitn(2, ' ').collect();
 
     match parts.get(0) {
         Some(&"GET") => {
             if let Some(key) = parts.get(1) {
-                return Ok(BuckQuery::Get(key.to_string()));
+                let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
+                return Ok(BuckQuery::Get(keys));
             }
 
             Err(BuckParserError::InvalidQueryCommand(query.to_string()))
-        },
+        }
         Some(&"SET") => {
-            if let (Some(key), Some(value)) = (parts.get(1), parts.get(2)) {
-                let buck_type = get_value_type(value);
+            if let Some(key) = parts.get(1) {
+                let key_value: Vec<&str> = key.splitn(2, ' ').collect();
 
-                return Ok(BuckQuery::Set(key.to_string(), buck_type?))
+                if let (Some(key), Some(value)) = (key_value.get(0), key_value.get(1)) {
+                    let buck_type = get_value_type(value);
+    
+                    return Ok(BuckQuery::Set(key.to_string(), buck_type?));
+                }
             }
 
             Err(BuckParserError::InvalidQueryCommand(query.to_string()))
-        },
-        _ => Err(BuckParserError::InvalidQueryCommand(query.to_string()))
+        }
+        _ => Err(BuckParserError::InvalidQueryCommand(query.to_string())),
     }
 }
