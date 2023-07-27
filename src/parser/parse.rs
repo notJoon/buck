@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::types::BuckTypes;
+use crate::types::{BuckTypes, parse_hash, parse_sets};
 
 use super::{errors::BuckParserError, query::BuckQuery};
 
@@ -28,6 +28,14 @@ pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
         _ => {
             if value.starts_with('"') && value.ends_with('"') {
                 return Ok(BuckTypes::String(value[1..value.len() - 1].to_string()));
+            }
+
+            if value.starts_with("{") && value.ends_with("}") {
+                return Ok(BuckTypes::Hash(parse_hash(&value[1..value.len() - 1])?));
+            }
+
+            if value.starts_with("(") && value.ends_with(")") {
+                return Ok(BuckTypes::Sets(parse_sets(&value[1..value.len() - 1])?));
             }
         }
     }
@@ -97,10 +105,13 @@ pub fn parse_query(query: &str) -> BuckParserResult {
                     let buck_type = get_value_type(value)?;
 
                     if value.contains(' ') {
-                        if let BuckTypes::String(_) = buck_type {
-                            // do nothing
-                        } else {
-                            return Err(BuckParserError::UpdateValueContainsSpace(value.to_string()));
+                        match buck_type {
+                            BuckTypes::String(_) | BuckTypes::Hash(_) | BuckTypes::Sets(_) => {}
+                            _ => {
+                                return Err(BuckParserError::UpdateValueContainsSpace(
+                                    value.to_string(),
+                                ))
+                            }
                         }
                     }
 

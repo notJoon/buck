@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod query_tests {
+    use std::collections::{HashMap, HashSet};
+
     use buck::parser::errors::BuckParserError;
     use buck::parser::parse::parse_query;
     use buck::parser::query::BuckQuery::{Get, Insert, Remove, Update};
@@ -278,6 +280,85 @@ mod query_tests {
             ))
         );
 
+        // hash query
+        let query = "UPDATE key {key:1}";
+        let result = parse_query(query);
+        assert_eq!(
+            result,
+            Ok(Update(
+                "key".to_owned(),
+                BuckTypes::Hash({
+                    let mut h = HashMap::new();
+                    h.insert("key".to_owned(), BuckTypes::Integer(1));
+                    h
+                })
+            ))
+        );
+
+        let query = "UPDATE key {key1:1, key2:true, key3:1.0, key4:\"test\"}";
+        let result = parse_query(query);
+        assert_eq!(
+            result,
+            Ok(Update(
+                "key".to_owned(),
+                BuckTypes::Hash({
+                    let mut h = HashMap::new();
+                    h.insert("key1".to_owned(), BuckTypes::Integer(1));
+                    h.insert("key2".to_owned(), BuckTypes::Boolean(true));
+                    h.insert("key3".to_owned(), BuckTypes::Float(1.0));
+                    h.insert("key4".to_owned(), BuckTypes::String("test".to_owned()));
+                    h
+                })
+            ))
+        );
+
+        let sets_query = "UPDATE key (1, 2, 3, 4, 5)";
+        let result = parse_query(sets_query);
+        assert_eq!(
+            result,
+            Ok(Update(
+                "key".to_owned(),
+                BuckTypes::Sets(
+                    vec!["1", "2", "3", "4", "5"]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect()
+                )
+            ))
+        );
+
+        let duplicated_sets_query = "UPDATE key (1, 2, 3, 4, 5, 1, 2, 3, 4, 5)";
+        let result = parse_query(duplicated_sets_query);
+        assert_eq!(
+            result,
+            Ok(Update(
+                "key".to_owned(),
+                BuckTypes::Sets(
+                    vec!["1", "2", "3", "4", "5"]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect()
+                )
+            ))
+        );
+
+        let empty_sets_query = "UPDATE key ()";
+        let result = parse_query(empty_sets_query);
+        assert_eq!(
+            result,
+            Ok(Update(
+                "key".to_owned(),
+                BuckTypes::Sets(
+                    vec![""]
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect()
+                )
+            ))
+        );
+
+        ////// Error Cases //////
+
         let invalid_query = "UPDATE key";
         let result = parse_query(invalid_query);
         assert_eq!(
@@ -300,6 +381,20 @@ mod query_tests {
             result,
             Err(BuckParserError::InvalidKey("1".to_string()))
         );
+
+        let invalid_hash_query = "UPDATE key {key1:1, key2:}";
+        let result = parse_query(invalid_hash_query);
+        assert_eq!(
+            result,
+            Err(BuckParserError::HashValueIsEmpty("key2".to_owned()))
+        );
+
+        let invalid_hash_query = "UPDATE key {key1:1, :1}";
+        let result = parse_query(invalid_hash_query);
+        assert_eq!(
+            result,
+            Err(BuckParserError::HashKeyIsEmpty("1".to_owned()))
+        )
     }
 
     #[test]
