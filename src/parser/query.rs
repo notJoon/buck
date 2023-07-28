@@ -9,6 +9,7 @@ pub enum BuckQuery {
     //TODO Commit and Rollback may be take db name as argument
     Commit,
     Rollback,
+    Exit,
     Unknown,
 }
 
@@ -51,6 +52,9 @@ impl BuckQuery {
                 db.abort().unwrap();
 
                 Ok(BuckLog::RollbackOk)
+            }
+            BuckQuery::Exit => {
+                std::process::exit(0);
             }
             _ => {
                 unimplemented!("Not implemented yet")

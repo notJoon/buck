@@ -137,6 +137,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
         }
         Some(&"COMMIT") => Ok(BuckQuery::Commit),
         Some(&"ROLLBACK") => Ok(BuckQuery::Rollback),
+        Some(&"exit") => Ok(BuckQuery::Exit),
         _ => Err(BuckParserError::InvalidQueryCommand(query.to_owned())),
     }
 }
