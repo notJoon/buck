@@ -18,16 +18,14 @@ fn main() {
 
         // Call Stack: input -> parse_query -> execute -> db -> Output
         match parse_query(input) {
-            Ok(query) => {
-                match query.execute(input, &mut db) {
-                    Ok(log) => {
-                        println!("{}", log);
-                    }
-                    Err(e) => {
-                        eprintln!("[ERROR] {}", e);
-                    }
+            Ok(query) => match query.execute(input, &mut db) {
+                Ok(log) => {
+                    println!("{}", log);
                 }
-            }
+                Err(e) => {
+                    eprintln!("[ERROR] {}", e);
+                }
+            },
             Err(e) => {
                 eprintln!("[ERROR] Failed to parse query: {}", e)
             }

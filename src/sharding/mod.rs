@@ -1,2 +1,2 @@
-pub mod shard;
 pub mod hash;
+pub mod shard;
