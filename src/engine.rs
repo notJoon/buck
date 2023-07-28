@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, HashMap};
 
 use crate::sharding::hash::calculate_hash;
-use crate::{errors::BuckEngineError, log::BuckLog, types::BuckTypes};
 use crate::sharding::shard::BuckDBShard;
+use crate::{errors::BuckEngineError, log::BuckLog, types::BuckTypes};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum TransactionStatus {
@@ -84,16 +84,17 @@ impl BuckDB {
     pub fn insert(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
         match self.status {
             TransactionStatus::Committed => {
+                self.status = TransactionStatus::Uncommitted;
+
                 if self.is_shard_active {
                     self.with_shard(&key, |shard| shard.insert(key.clone(), value.clone()))?;
                 }
 
-                self.data.insert(key.clone(), value);
+                self.uncommitted_data.insert(key.clone(), value);
             }
             TransactionStatus::Uncommitted => {
                 if self.is_shard_active {
-                    let shard_idx = calculate_hash(&key) as usize % self.shards.len();
-                    self.shards[shard_idx].insert(key.clone(), value.clone())?;
+                    self.with_shard(&key, |shard| shard.insert(key.clone(), value.clone()))?;
                 }
 
                 self.uncommitted_data.insert(key.clone(), value);
@@ -128,7 +129,7 @@ impl BuckDB {
         if self.is_shard_active {
             self.with_shard(key, |shard| shard.remove(key))?;
         }
-    
+
         match self.status {
             TransactionStatus::Committed => match self.data.remove(key) {
                 Some(_) => Ok(BuckLog::RemoveOk(key.to_owned())),
@@ -149,9 +150,11 @@ impl BuckDB {
         }
 
         match self.status {
+            // TODO if apply update to uncommitted data, should change the status to uncommitted
             TransactionStatus::Committed => match self.data.get_mut(key) {
-                Some(v) => {
-                    *v = value;
+                Some(val) => {
+                    // exchange the previous value with the new value
+                    *val = value;
                     Ok(BuckLog::UpdateOk(key.to_owned()))
                 }
                 None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
@@ -193,7 +196,7 @@ impl BuckDB {
 
             return query_function(shard);
         }
-            
+
         Err(BuckEngineError::ShardingNotActive)
     }
 }

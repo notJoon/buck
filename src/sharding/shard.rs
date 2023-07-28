@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use crate::{types::BuckTypes, log::BuckLog, errors::BuckEngineError};
+use crate::{errors::BuckEngineError, log::BuckLog, types::BuckTypes};
 
 #[derive(Debug, Clone, Default)]
 pub struct BuckDBShard {
@@ -13,6 +13,7 @@ impl BuckDBShard {
     }
 
     pub fn insert(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
+        print!("shard insert");
         self.data.insert(key.to_owned(), value);
         Ok(BuckLog::InsertOk(key.to_owned()))
     }
