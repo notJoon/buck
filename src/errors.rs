@@ -7,6 +7,7 @@ pub enum BuckEngineError {
     AlreadyCommitted,
     NoBackup,
     AbortError,
+    ShardingNotActive,
 }
 
 impl fmt::Display for BuckEngineError {
@@ -17,6 +18,7 @@ impl fmt::Display for BuckEngineError {
             BuckEngineError::AlreadyCommitted => write!(f, "[Error] Transaction already committed"),
             BuckEngineError::NoBackup => write!(f, "[Error] No backup"),
             BuckEngineError::AbortError => write!(f, "[Error] Abort failed"),
+            BuckEngineError::ShardingNotActive => write!(f, "[Error] Sharding not active"),
         }
     }
 }

@@ -85,7 +85,7 @@ mod db_test {
     #[test]
     fn test_transaction_commit() {
         let mut db = BuckDB::new();
-        db.begin_transaction();
+        db.begin_transaction().unwrap();
         db.insert("key1".to_string(), BuckTypes::String("value1".to_string()))
             .unwrap();
 
@@ -103,7 +103,7 @@ mod db_test {
     fn test_multiple_data_committing_at_once() {
         let mut db = BuckDB::new();
 
-        db.begin_transaction();
+        db.begin_transaction().unwrap();
 
         db.insert("key1".to_string(), BuckTypes::String("value1".to_string()))
             .unwrap();
@@ -123,7 +123,7 @@ mod db_test {
     fn test_data_rollback_on_abort() {
         let mut db = BuckDB::new();
 
-        db.begin_transaction();
+        db.begin_transaction().unwrap();
 
         db.insert("key1".to_string(), BuckTypes::String("value1".to_string()))
             .unwrap();

@@ -1,4 +1,4 @@
-use crate::{types::BuckTypes, engine::BuckDB, errors::BuckEngineError, log::BuckLog};
+use crate::{engine::BuckDB, errors::BuckEngineError, log::BuckLog, types::BuckTypes};
 
 #[derive(Debug, PartialEq)]
 pub enum BuckQuery {
@@ -6,6 +6,7 @@ pub enum BuckQuery {
     Insert(String, BuckTypes),
     Update(String, BuckTypes),
     Remove(Vec<String>),
+    Shard(usize),
     //TODO Commit and Rollback may be take db name as argument
     Commit,
     Rollback,
@@ -55,6 +56,11 @@ impl BuckQuery {
             }
             BuckQuery::Exit => {
                 std::process::exit(0);
+            }
+            BuckQuery::Shard(num_shards) => {
+                db.enable_sharding(num_shards).unwrap();
+
+                Ok(BuckLog::ShardingEnableOk)
             }
             _ => {
                 unimplemented!("Not implemented yet")

@@ -119,10 +119,7 @@ mod query_tests {
 
         let invalid_number_key = "INSERT 1 2";
         let result = parse_query(invalid_number_key);
-        assert_eq!(
-            result,
-            Err(BuckParserError::InvalidKey("1".to_owned()))
-        );
+        assert_eq!(result, Err(BuckParserError::InvalidKey("1".to_owned())));
     }
 
     #[test]
@@ -155,10 +152,7 @@ mod query_tests {
 
         let invalid_number_key = "GET 1 2";
         let result = parse_query(invalid_number_key);
-        assert_eq!(
-            result,
-            Err(BuckParserError::InvalidKey("1, 2".to_owned()))
-        );
+        assert_eq!(result, Err(BuckParserError::InvalidKey("1, 2".to_owned())));
     }
 
     #[test]
@@ -348,12 +342,7 @@ mod query_tests {
             result,
             Ok(Update(
                 "key".to_string(),
-                BuckTypes::Sets(
-                    vec![""]
-                        .iter()
-                        .map(|s| s.to_string())
-                        .collect()
-                )
+                BuckTypes::Sets(vec![""].iter().map(|s| s.to_string()).collect())
             ))
         );
 
@@ -370,17 +359,11 @@ mod query_tests {
 
         let invalid_number_key = "UPDATE 1 2";
         let result = parse_query(invalid_number_key);
-        assert_eq!(
-            result,
-            Err(BuckParserError::InvalidKey("1".to_owned()))
-        );
+        assert_eq!(result, Err(BuckParserError::InvalidKey("1".to_owned())));
 
         let invalid_query = "UPDATE 1 2 3 4 5 6 7 8 9 10";
         let result = parse_query(invalid_query);
-        assert_eq!(
-            result,
-            Err(BuckParserError::InvalidKey("1".to_owned()))
-        );
+        assert_eq!(result, Err(BuckParserError::InvalidKey("1".to_owned())));
 
         let invalid_hash_query = "UPDATE key {key1:1, key2:}";
         let result = parse_query(invalid_hash_query);
@@ -391,10 +374,7 @@ mod query_tests {
 
         let invalid_hash_query = "UPDATE key {key1:1, :1}";
         let result = parse_query(invalid_hash_query);
-        assert_eq!(
-            result,
-            Err(BuckParserError::HashKeyIsEmpty("1".to_owned()))
-        )
+        assert_eq!(result, Err(BuckParserError::HashKeyIsEmpty("1".to_owned())))
     }
 
     #[test]
@@ -427,9 +407,6 @@ mod query_tests {
 
         let invalid_number_key = "REMOVE 1 2";
         let result = parse_query(invalid_number_key);
-        assert_eq!(
-            result,
-            Err(BuckParserError::InvalidKey("1, 2".to_owned()))
-        );
+        assert_eq!(result, Err(BuckParserError::InvalidKey("1, 2".to_owned())));
     }
 }

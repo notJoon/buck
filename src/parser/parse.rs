@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::types::{BuckTypes, parse_hash, parse_sets};
+use crate::{types::{parse_hash, parse_sets, BuckTypes}, engine::BuckDB};
 
 use super::{errors::BuckParserError, query::BuckQuery};
 
@@ -50,11 +50,10 @@ fn is_valid_key(key: &str) -> bool {
 }
 
 fn get_invalid_keys(keys: Vec<String>) -> Vec<String> {
-    keys
-        .into_iter()
+    keys.into_iter()
         .filter(|key| !is_valid_key(key))
         .collect::<Vec<String>>()
-} 
+}
 
 pub fn parse_query(query: &str) -> BuckParserResult {
     let parts: Vec<&str> = query.splitn(2, ' ').collect();
@@ -137,6 +136,17 @@ pub fn parse_query(query: &str) -> BuckParserResult {
         }
         Some(&"COMMIT") => Ok(BuckQuery::Commit),
         Some(&"ROLLBACK") => Ok(BuckQuery::Rollback),
+        Some(&"SHARD") => {
+            if let Some(shard) = parts.get(1) {
+                let n_shard = shard.trim().parse::<usize>();
+
+                if let Ok(n_shard) = n_shard {
+                    return Ok(BuckQuery::Shard(n_shard));
+                }
+            }
+
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+        }
         Some(&"exit") => Ok(BuckQuery::Exit),
         _ => Err(BuckParserError::InvalidQueryCommand(query.to_owned())),
     }
