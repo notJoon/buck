@@ -6,9 +6,11 @@ pub enum BuckLog {
     GetOk(String),
     RemoveOk(String),
     UpdateOk(String),
+    ClearTransactionOk,
     TransactionOk,
     RollbackOk,
     BackupOk,
+    ShardingEnableOk,
 }
 
 impl fmt::Display for BuckLog {
@@ -18,9 +20,11 @@ impl fmt::Display for BuckLog {
             BuckLog::GetOk(key) => write!(f, "[log] {key}"),
             BuckLog::RemoveOk(key) => write!(f, "[log] {key}"),
             BuckLog::UpdateOk(key) => write!(f, "[log] {key}"),
+            BuckLog::ClearTransactionOk => write!(f, "[log] Transaction cleared"),
             BuckLog::TransactionOk => write!(f, "[log] Transaction committed"),
             BuckLog::RollbackOk => write!(f, "[log] Transaction rolled back"),
             BuckLog::BackupOk => write!(f, "[Success] Database backed up"),
+            BuckLog::ShardingEnableOk => write!(f, "[Success] Sharding enabled"),
         }
     }
 }
