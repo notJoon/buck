@@ -1,5 +1,3 @@
-use std::collections::btree_map::Keys;
-
 use crate::{types::BuckTypes, engine::BuckDB, errors::BuckEngineError, log::BuckLog};
 
 #[derive(Debug, PartialEq)]
@@ -8,6 +6,9 @@ pub enum BuckQuery {
     Insert(String, BuckTypes),
     Update(String, BuckTypes),
     Remove(Vec<String>),
+    //TODO Commit and Rollback may be take db name as argument
+    Commit,
+    Rollback,
     Unknown,
 }
 
@@ -41,7 +42,19 @@ impl BuckQuery {
 
                 Ok(BuckLog::UpdateOk(query.to_owned()))
             }
-            _ => unimplemented!(),
+            BuckQuery::Commit => {
+                db.commit().unwrap();
+
+                Ok(BuckLog::TransactionOk)
+            }
+            BuckQuery::Rollback => {
+                db.abort().unwrap();
+
+                Ok(BuckLog::RollbackOk)
+            }
+            _ => {
+                unimplemented!("Not implemented yet")
+            }
         }
     }
 }

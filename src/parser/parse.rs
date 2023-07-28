@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::{types::{BuckTypes, parse_hash, parse_sets}, engine::BuckDB};
+use crate::types::{BuckTypes, parse_hash, parse_sets};
 
 use super::{errors::BuckParserError, query::BuckQuery};
 
@@ -9,7 +9,7 @@ pub type BuckParserResult = Result<BuckQuery, BuckParserError>;
 pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
     // remove all underscores from value to allow for parse large numbers
     if value.contains('_') {
-        let value = value.replace("_", "");
+        let value = value.replace('_', "");
         return get_value_type(&value);
     }
 
@@ -27,20 +27,20 @@ pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
         // string value must be wrapped in double quotes
         _ => {
             if value.starts_with('"') && value.ends_with('"') {
-                return Ok(BuckTypes::String(value[1..value.len() - 1].to_string()));
+                return Ok(BuckTypes::String(value[1..value.len() - 1].into()));
             }
 
-            if value.starts_with("{") && value.ends_with("}") {
+            if value.starts_with('{') && value.ends_with('}') {
                 return Ok(BuckTypes::Hash(parse_hash(&value[1..value.len() - 1])?));
             }
 
-            if value.starts_with("(") && value.ends_with(")") {
+            if value.starts_with('(') && value.ends_with(')') {
                 return Ok(BuckTypes::Sets(parse_sets(&value[1..value.len() - 1])?));
             }
         }
     }
 
-    Ok(BuckTypes::Unknown(value.to_string()))
+    Ok(BuckTypes::Unknown(value.to_owned()))
 }
 
 fn is_valid_key(key: &str) -> bool {
@@ -51,7 +51,6 @@ fn is_valid_key(key: &str) -> bool {
 
 fn get_invalid_keys(keys: Vec<String>) -> Vec<String> {
     keys
-        .clone()
         .into_iter()
         .filter(|key| !is_valid_key(key))
         .collect::<Vec<String>>()
@@ -60,7 +59,7 @@ fn get_invalid_keys(keys: Vec<String>) -> Vec<String> {
 pub fn parse_query(query: &str) -> BuckParserResult {
     let parts: Vec<&str> = query.splitn(2, ' ').collect();
 
-    match parts.get(0) {
+    match parts.first() {
         Some(&"GET") => {
             if let Some(key) = parts.get(1) {
                 let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
@@ -74,13 +73,13 @@ pub fn parse_query(query: &str) -> BuckParserResult {
                 return Ok(BuckQuery::Get(keys));
             }
 
-            Err(BuckParserError::InvalidQueryCommand(query.to_string()))
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
         Some(&"INSERT") => {
             if let Some(key) = parts.get(1) {
                 let key_value: Vec<&str> = key.splitn(2, ' ').collect();
 
-                if let (Some(key), Some(value)) = (key_value.get(0), key_value.get(1)) {
+                if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
                     if !is_valid_key(key) {
                         return Err(BuckParserError::InvalidKey(key.to_string()));
                     }
@@ -91,13 +90,13 @@ pub fn parse_query(query: &str) -> BuckParserResult {
                 }
             }
 
-            Err(BuckParserError::InvalidQueryCommand(query.to_string()))
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
         Some(&"UPDATE") => {
             if let Some(key) = parts.get(1) {
                 let key_value: Vec<&str> = key.splitn(2, ' ').collect();
 
-                if let (Some(key), Some(value)) = (key_value.get(0), key_value.get(1)) {
+                if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
                     if !is_valid_key(key) {
                         return Err(BuckParserError::InvalidKey(key.to_string()));
                     }
@@ -119,7 +118,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
                 }
             }
 
-            Err(BuckParserError::InvalidQueryCommand(query.to_string()))
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
         Some(&"REMOVE") => {
             if let Some(key) = parts.get(1) {
@@ -134,8 +133,10 @@ pub fn parse_query(query: &str) -> BuckParserResult {
                 return Ok(BuckQuery::Remove(keys));
             }
 
-            Err(BuckParserError::InvalidQueryCommand(query.to_string()))
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        _ => Err(BuckParserError::InvalidQueryCommand(query.to_string())),
+        Some(&"COMMIT") => Ok(BuckQuery::Commit),
+        Some(&"ROLLBACK") => Ok(BuckQuery::Rollback),
+        _ => Err(BuckParserError::InvalidQueryCommand(query.to_owned())),
     }
 }

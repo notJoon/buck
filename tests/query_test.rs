@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod query_tests {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
 
     use buck::parser::errors::BuckParserError;
     use buck::parser::parse::parse_query;
@@ -11,25 +11,25 @@ mod query_tests {
     fn test_parse_insert() {
         let query = "INSERT key 1";
         let result = parse_query(query);
-        assert_eq!(result, Ok(Insert("key".to_string(), BuckTypes::Integer(1))));
+        assert_eq!(result, Ok(Insert("key".to_owned(), BuckTypes::Integer(1))));
 
         let query = "INSERT key 1_000_000_000_000";
         let result = parse_query(query);
         assert_eq!(
             result,
-            Ok(Insert("key".to_string(), BuckTypes::Integer(1000000000000)))
+            Ok(Insert("key".to_owned(), BuckTypes::Integer(1000000000000)))
         );
 
         let query = "INSERT key 1.0";
         let result = parse_query(query);
-        assert_eq!(result, Ok(Insert("key".to_string(), BuckTypes::Float(1.0))));
+        assert_eq!(result, Ok(Insert("key".to_owned(), BuckTypes::Float(1.0))));
 
         let query = "INSERT key 1_000_000_000_000.012_345_678_900";
         let result = parse_query(query);
         assert_eq!(
             result,
             Ok(Insert(
-                "key".to_string(),
+                "key".to_owned(),
                 BuckTypes::Float(1000000000000.0123456789)
             ))
         );
@@ -38,7 +38,7 @@ mod query_tests {
         let result = parse_query(query);
         assert_eq!(
             result,
-            Ok(Insert("key".to_string(), BuckTypes::Boolean(true)))
+            Ok(Insert("key".to_owned(), BuckTypes::Boolean(true)))
         );
 
         let query = "INSERT key True";
@@ -46,8 +46,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Insert(
-                "key".to_string(),
-                BuckTypes::Unknown("True".to_string())
+                "key".to_owned(),
+                BuckTypes::Unknown("True".to_owned())
             ))
         );
 
@@ -56,8 +56,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Insert(
-                "key".to_string(),
-                BuckTypes::Unknown("True True".to_string())
+                "key".to_owned(),
+                BuckTypes::Unknown("True True".to_owned())
             ))
         );
 
@@ -65,7 +65,7 @@ mod query_tests {
         let result = parse_query(query);
         assert_eq!(
             result,
-            Ok(Insert("key".to_string(), BuckTypes::Boolean(false)))
+            Ok(Insert("key".to_owned(), BuckTypes::Boolean(false)))
         );
 
         let query = "INSERT key \"test\"";
@@ -73,8 +73,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Insert(
-                "key".to_string(),
-                BuckTypes::String("test".to_string())
+                "key".to_owned(),
+                BuckTypes::String("test".to_owned())
             ))
         );
 
@@ -83,8 +83,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Insert(
-                "key".to_string(),
-                BuckTypes::String("FOO BAR BAZ".to_string())
+                "key".to_owned(),
+                BuckTypes::String("FOO BAR BAZ".to_owned())
             ))
         );
 
@@ -93,8 +93,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Insert(
-                "key".to_string(),
-                BuckTypes::String("foo bar baz".to_string())
+                "key".to_owned(),
+                BuckTypes::String("foo bar baz".to_owned())
             ))
         );
 
@@ -103,8 +103,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Insert(
-                "key".to_string(),
-                BuckTypes::Unknown("q1w2e3r4t5!!".to_string())
+                "key".to_owned(),
+                BuckTypes::Unknown("q1w2e3r4t5!!".to_owned())
             ))
         );
 
@@ -113,7 +113,7 @@ mod query_tests {
         assert_eq!(
             result,
             Err(BuckParserError::InvalidQueryCommand(
-                invalid_query.to_string()
+                invalid_query.to_owned()
             ))
         );
 
@@ -121,7 +121,7 @@ mod query_tests {
         let result = parse_query(invalid_number_key);
         assert_eq!(
             result,
-            Err(BuckParserError::InvalidKey("1".to_string()))
+            Err(BuckParserError::InvalidKey("1".to_owned()))
         );
     }
 
@@ -129,20 +129,20 @@ mod query_tests {
     fn test_parse_get() {
         let query = "GET key";
         let result = parse_query(query);
-        assert_eq!(result, Ok(Get(vec!["key".to_string()])));
+        assert_eq!(result, Ok(Get(vec!["key".to_owned()])));
 
         let multiple_keys = "GET key1 key2 key3 key4 key5 key6 key7";
         let result = parse_query(multiple_keys);
         assert_eq!(
             result,
             Ok(Get(vec![
-                "key1".to_string(),
-                "key2".to_string(),
-                "key3".to_string(),
-                "key4".to_string(),
-                "key5".to_string(),
-                "key6".to_string(),
-                "key7".to_string(),
+                "key1".to_owned(),
+                "key2".to_owned(),
+                "key3".to_owned(),
+                "key4".to_owned(),
+                "key5".to_owned(),
+                "key6".to_owned(),
+                "key7".to_owned(),
             ]))
         );
 
@@ -150,14 +150,14 @@ mod query_tests {
         let result = parse_query(query);
         assert_eq!(
             result,
-            Err(BuckParserError::InvalidQueryCommand(query.to_string()))
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         );
 
         let invalid_number_key = "GET 1 2";
         let result = parse_query(invalid_number_key);
         assert_eq!(
             result,
-            Err(BuckParserError::InvalidKey("1, 2".to_string()))
+            Err(BuckParserError::InvalidKey("1, 2".to_owned()))
         );
     }
 
@@ -165,25 +165,25 @@ mod query_tests {
     fn test_parse_update() {
         let query = "UPDATE key 1";
         let result = parse_query(query);
-        assert_eq!(result, Ok(Update("key".to_string(), BuckTypes::Integer(1))));
+        assert_eq!(result, Ok(Update("key".to_owned(), BuckTypes::Integer(1))));
 
         let query = "UPDATE key 1_000_000_000_000";
         let result = parse_query(query);
         assert_eq!(
             result,
-            Ok(Update("key".to_string(), BuckTypes::Integer(1000000000000)))
+            Ok(Update("key".to_owned(), BuckTypes::Integer(1000000000000)))
         );
 
         let query = "UPDATE key 1.0";
         let result = parse_query(query);
-        assert_eq!(result, Ok(Update("key".to_string(), BuckTypes::Float(1.0))));
+        assert_eq!(result, Ok(Update("key".to_owned(), BuckTypes::Float(1.0))));
 
         let query = "UPDATE key 1_000_000_000_000.012_345_678_900";
         let result = parse_query(query);
         assert_eq!(
             result,
             Ok(Update(
-                "key".to_string(),
+                "key".to_owned(),
                 BuckTypes::Float(1000000000000.0123456789)
             ))
         );
@@ -192,7 +192,7 @@ mod query_tests {
         let result = parse_query(query);
         assert_eq!(
             result,
-            Ok(Update("key".to_string(), BuckTypes::Boolean(true)))
+            Ok(Update("key".to_owned(), BuckTypes::Boolean(true)))
         );
 
         let query = "UPDATE key True";
@@ -200,8 +200,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Update(
-                "key".to_string(),
-                BuckTypes::Unknown("True".to_string())
+                "key".to_owned(),
+                BuckTypes::Unknown("True".to_owned())
             ))
         );
 
@@ -210,7 +210,7 @@ mod query_tests {
         assert_eq!(
             result,
             Err(BuckParserError::UpdateValueContainsSpace(
-                "True True".to_string()
+                "True True".to_owned()
             ))
         );
 
@@ -218,7 +218,7 @@ mod query_tests {
         let result = parse_query(query);
         assert_eq!(
             result,
-            Ok(Update("key".to_string(), BuckTypes::Boolean(false)))
+            Ok(Update("key".to_owned(), BuckTypes::Boolean(false)))
         );
 
         let query = "UPDATE key false True";
@@ -226,7 +226,7 @@ mod query_tests {
         assert_eq!(
             result,
             Err(BuckParserError::UpdateValueContainsSpace(
-                "false True".to_string()
+                "false True".to_owned()
             ))
         );
 
@@ -235,8 +235,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Update(
-                "key".to_string(),
-                BuckTypes::String("some string value".to_string())
+                "key".to_owned(),
+                BuckTypes::String("some string value".to_owned())
             ))
         );
 
@@ -245,8 +245,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Update(
-                "key".to_string(),
-                BuckTypes::String("FOO BAR BAZ".to_string())
+                "key".to_owned(),
+                BuckTypes::String("FOO BAR BAZ".to_owned())
             ))
         );
 
@@ -255,8 +255,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Update(
-                "key".to_string(),
-                BuckTypes::String("10 foo bar baz".to_string())
+                "key".to_owned(),
+                BuckTypes::String("10 foo bar baz".to_owned())
             ))
         );
 
@@ -265,8 +265,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Update(
-                "key".to_string(),
-                BuckTypes::String("foo bar baz".to_string())
+                "key".to_owned(),
+                BuckTypes::String("foo bar baz".to_owned())
             ))
         );
 
@@ -275,8 +275,8 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Update(
-                "key".to_string(),
-                BuckTypes::Unknown("q1w2e3r4t5!!".to_string())
+                "key".to_owned(),
+                BuckTypes::Unknown("q1w2e3r4t5!!".to_owned())
             ))
         );
 
@@ -347,7 +347,7 @@ mod query_tests {
         assert_eq!(
             result,
             Ok(Update(
-                "key".to_owned(),
+                "key".to_string(),
                 BuckTypes::Sets(
                     vec![""]
                         .iter()
@@ -364,7 +364,7 @@ mod query_tests {
         assert_eq!(
             result,
             Err(BuckParserError::InvalidQueryCommand(
-                invalid_query.to_string()
+                invalid_query.to_owned()
             ))
         );
 
@@ -372,14 +372,14 @@ mod query_tests {
         let result = parse_query(invalid_number_key);
         assert_eq!(
             result,
-            Err(BuckParserError::InvalidKey("1".to_string()))
+            Err(BuckParserError::InvalidKey("1".to_owned()))
         );
 
         let invalid_query = "UPDATE 1 2 3 4 5 6 7 8 9 10";
         let result = parse_query(invalid_query);
         assert_eq!(
             result,
-            Err(BuckParserError::InvalidKey("1".to_string()))
+            Err(BuckParserError::InvalidKey("1".to_owned()))
         );
 
         let invalid_hash_query = "UPDATE key {key1:1, key2:}";
@@ -401,20 +401,20 @@ mod query_tests {
     fn test_parse_remove() {
         let query = "REMOVE key";
         let result = parse_query(query);
-        assert_eq!(result, Ok(Remove(vec!["key".to_string()])));
+        assert_eq!(result, Ok(Remove(vec!["key".to_owned()])));
 
         let multiple_keys = "REMOVE key1 key2 key3 key4 key5 key6 key7";
         let result = parse_query(multiple_keys);
         assert_eq!(
             result,
             Ok(Remove(vec![
-                "key1".to_string(),
-                "key2".to_string(),
-                "key3".to_string(),
-                "key4".to_string(),
-                "key5".to_string(),
-                "key6".to_string(),
-                "key7".to_string(),
+                "key1".to_owned(),
+                "key2".to_owned(),
+                "key3".to_owned(),
+                "key4".to_owned(),
+                "key5".to_owned(),
+                "key6".to_owned(),
+                "key7".to_owned(),
             ]))
         );
 
@@ -422,14 +422,14 @@ mod query_tests {
         let result = parse_query(query);
         assert_eq!(
             result,
-            Err(BuckParserError::InvalidQueryCommand(query.to_string()))
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         );
 
         let invalid_number_key = "REMOVE 1 2";
         let result = parse_query(invalid_number_key);
         assert_eq!(
             result,
-            Err(BuckParserError::InvalidKey("1, 2".to_string()))
+            Err(BuckParserError::InvalidKey("1, 2".to_owned()))
         );
     }
 }

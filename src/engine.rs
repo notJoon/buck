@@ -82,7 +82,7 @@ impl BuckDB {
             TransactionStatus::Abort => return self.abort(),
         }
 
-        Ok(BuckLog::InsertOk(key.to_string()))
+        Ok(BuckLog::InsertOk(key))
     }
 
     /// Get a value from the database.
@@ -93,12 +93,12 @@ impl BuckDB {
                 Some(value) => Ok(value),
                 None => match self.data.get(key) {
                     Some(value) => Ok(value),
-                    None => Err(BuckEngineError::KeyNotFound(key.to_string())),
+                    None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
                 },
             },
             TransactionStatus::Committed => match self.data.get(key) {
                 Some(value) => Ok(value),
-                None => Err(BuckEngineError::KeyNotFound(key.to_string())),
+                None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
             },
             _ => Err(BuckEngineError::AbortError),
         }
@@ -108,14 +108,14 @@ impl BuckDB {
     pub fn remove(&mut self, key: &str) -> Result<BuckLog, BuckEngineError> {
         match self.status {
             TransactionStatus::Committed => match self.data.remove(key) {
-                Some(_) => Ok(BuckLog::RemoveOk(key.to_string())),
-                None => Err(BuckEngineError::KeyNotFound(key.to_string())),
+                Some(_) => Ok(BuckLog::RemoveOk(key.to_owned())),
+                None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
             },
             TransactionStatus::Uncommitted => match self.uncommitted_data.remove(key) {
-                Some(_) => Ok(BuckLog::RemoveOk(key.to_string())),
-                None => Err(BuckEngineError::KeyNotFound(key.to_string())),
+                Some(_) => Ok(BuckLog::RemoveOk(key.to_owned())),
+                None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
             },
-            TransactionStatus::Abort => return self.abort(),
+            TransactionStatus::Abort => self.abort(),
         }
     }
 
@@ -125,18 +125,18 @@ impl BuckDB {
             TransactionStatus::Committed => match self.data.get_mut(key) {
                 Some(v) => {
                     *v = value;
-                    Ok(BuckLog::UpdateOk(key.to_string()))
+                    Ok(BuckLog::UpdateOk(key.to_owned()))
                 }
-                None => Err(BuckEngineError::KeyNotFound(key.to_string())),
+                None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
             },
             TransactionStatus::Uncommitted => match self.uncommitted_data.get_mut(key) {
                 Some(v) => {
                     *v = value;
-                    Ok(BuckLog::UpdateOk(key.to_string()))
+                    Ok(BuckLog::UpdateOk(key.to_owned()))
                 }
-                None => Err(BuckEngineError::KeyNotFound(key.to_string())),
+                None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
             },
-            TransactionStatus::Abort => return self.abort(),
+            TransactionStatus::Abort => self.abort(),
         }
     }
 }

@@ -16,7 +16,7 @@ pub enum BuckTypes {
 }
 
 pub fn parse_hash(hash_input: &str) -> Result<HashMap<String, BuckTypes>, BuckParserError> {
-    let hash_input = hash_input.replace(" ", "");
+    let hash_input = hash_input.replace(' ', "");
 
     // expect input -> key1:value1,key2:value2, ...
     let mut hash = HashMap::new();
@@ -24,17 +24,17 @@ pub fn parse_hash(hash_input: &str) -> Result<HashMap<String, BuckTypes>, BuckPa
         let kv: Vec<&str> = part.splitn(2, ':').collect();
 
         if kv[0].is_empty() {
-            let value = kv[1].replace(":", "").to_owned();
+            let value = kv[1].replace(':', "");
             return Err(BuckParserError::HashKeyIsEmpty(value));
         }
 
         if kv[1].is_empty() {
-            let key = kv[0].replace(":", "").to_owned();
+            let key = kv[0].replace(':', "");
             return Err(BuckParserError::HashValueIsEmpty(key));
         }
 
         let value = get_value_type(kv[1])?;
-        hash.insert(kv[0].to_string(), value);
+        hash.insert(kv[0].to_owned(), value);
     }
 
     Ok(hash)
@@ -42,9 +42,9 @@ pub fn parse_hash(hash_input: &str) -> Result<HashMap<String, BuckTypes>, BuckPa
 
 pub fn parse_sets(set_input: &str) -> Result<HashSet<String>, BuckParserError> {
     let set = set_input
-        .replace(" ", "")
+        .replace(' ', "")
         .split(',')
-        .map(|s| s.to_string())
+        .map(|s| s.to_owned())
         .collect::<HashSet<String>>();
 
     Ok(set)

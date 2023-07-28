@@ -18,16 +18,24 @@ fn main() {
 
         match parse_query(input) {
             Ok(query) => {
-                let log = query.execute(input, &mut db).unwrap();
-                println!("{}", log);
+                match query.execute(input, &mut db) {
+                    Ok(log) => {
+                        println!("{}", log);
+                    }
+                    Err(e) => {
+                        eprintln!("[ERROR] {}", e);
+                    }
+                }
             }
             Err(e) => {
-                println!("{}", e);
+                eprintln!("[ERROR] Failed to parse query: {}", e)
             }
         };
 
         match input {
-            "exit" => break,
+            "exit" => {
+                std::process::exit(0);
+            }
             "clear" => {
                 print!("{}[2J", 27 as char);
             }

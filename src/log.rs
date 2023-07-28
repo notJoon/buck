@@ -14,10 +14,10 @@ pub enum BuckLog {
 impl fmt::Display for BuckLog {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            BuckLog::InsertOk(key) => write!(f, "[log] {key} inserted into database"),
-            BuckLog::GetOk(key) => write!(f, "[log] {key} retrieved from database"),
-            BuckLog::RemoveOk(key) => write!(f, "[log] {key} removed from database"),
-            BuckLog::UpdateOk(key) => write!(f, "[log] {key} updated in database"),
+            BuckLog::InsertOk(key) => write!(f, "[log] {key}"),
+            BuckLog::GetOk(key) => write!(f, "[log] {key}"),
+            BuckLog::RemoveOk(key) => write!(f, "[log] {key}"),
+            BuckLog::UpdateOk(key) => write!(f, "[log] {key}"),
             BuckLog::TransactionOk => write!(f, "[log] Transaction committed"),
             BuckLog::RollbackOk => write!(f, "[log] Transaction rolled back"),
             BuckLog::BackupOk => write!(f, "[Success] Database backed up"),
