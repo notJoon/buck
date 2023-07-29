@@ -25,7 +25,7 @@ impl fmt::Display for BuckLog {
             BuckLog::TransactionOk => write!(f, "[log] Transaction committed"),
             BuckLog::RollbackOk => write!(f, "[log] Transaction rolled back"),
             BuckLog::BackupOk => write!(f, "[Success] Database backed up"),
-            BuckLog::TypeOk(key, typ) => write!(f, "[Success] {key}: {typ}"),
+            BuckLog::TypeOk(key, typ) => write!(f, "({typ}) {key}"),
             BuckLog::ShardingEnableOk => write!(f, "[Success] Sharding enabled"),
         }
     }

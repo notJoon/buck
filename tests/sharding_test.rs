@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod sharding_tests {
     use buck::engine::BuckDB;
-    use buck::types::BuckTypes;
+    use buck::types::types::BuckTypes;
 
     #[test]
     fn test_sharding_insert() {

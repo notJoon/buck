@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::types::{parse_hash, parse_sets, BuckTypes};
+use crate::types::types::{parse_hash, parse_sets, parse_list, BuckTypes};
 
 use super::{errors::BuckParserError, query::BuckQuery};
 
@@ -28,6 +28,10 @@ pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
         _ => {
             if value.starts_with('"') && value.ends_with('"') {
                 return Ok(BuckTypes::String(value[1..value.len() - 1].into()));
+            }
+
+            if value.starts_with('[') && value.ends_with(']') {
+                return Ok(BuckTypes::List(parse_list(&value[1..value.len() - 1]).unwrap()));
             }
 
             if value.starts_with('{') && value.ends_with('}') {

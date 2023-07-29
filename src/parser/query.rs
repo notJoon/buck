@@ -1,4 +1,5 @@
-use crate::{engine::BuckDB, errors::BuckEngineError, log::BuckLog, types::BuckTypes};
+use crate::{engine::BuckDB, errors::BuckEngineError, log::BuckLog};
+use crate::types::types::BuckTypes;
 
 #[derive(Debug, PartialEq)]
 pub enum BuckQuery {

@@ -5,7 +5,7 @@ mod query_tests {
     use buck::parser::errors::BuckParserError;
     use buck::parser::parse::parse_query;
     use buck::parser::query::BuckQuery::{Get, Insert, Remove, Update};
-    use buck::types::BuckTypes;
+    use buck::types::types::BuckTypes;
 
     #[test]
     fn test_parse_insert() {
