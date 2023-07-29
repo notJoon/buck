@@ -8,6 +8,7 @@ pub enum BuckEngineError {
     NoBackup,
     AbortError,
     ShardingNotActive,
+    Unknown,
 }
 
 impl fmt::Display for BuckEngineError {
@@ -19,6 +20,7 @@ impl fmt::Display for BuckEngineError {
             BuckEngineError::NoBackup => write!(f, "[Error] No backup"),
             BuckEngineError::AbortError => write!(f, "[Error] Abort failed"),
             BuckEngineError::ShardingNotActive => write!(f, "[Error] Sharding not active"),
+            BuckEngineError::Unknown => write!(f, "[Error] Unknown error"),
         }
     }
 }

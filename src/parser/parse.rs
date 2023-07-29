@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::{types::{parse_hash, parse_sets, BuckTypes}, engine::BuckDB};
+use crate::types::{parse_hash, parse_sets, BuckTypes};
 
 use super::{errors::BuckParserError, query::BuckQuery};
 
@@ -143,6 +143,17 @@ pub fn parse_query(query: &str) -> BuckParserResult {
                 if let Ok(n_shard) = n_shard {
                     return Ok(BuckQuery::Shard(n_shard));
                 }
+            }
+
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+        }
+        Some(&"TYPE") => {
+            if let Some(key) = parts.get(1) {
+                if !is_valid_key(key) {
+                    return Err(BuckParserError::InvalidKey(key.to_string()));
+                }
+
+                return Ok(BuckQuery::Type(key.to_string()));
             }
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))

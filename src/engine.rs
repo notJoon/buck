@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, HashMap};
 
+use crate::parser::parse::get_value_type;
 use crate::sharding::hash::calculate_hash;
 use crate::sharding::shard::BuckDBShard;
 use crate::{errors::BuckEngineError, log::BuckLog, types::BuckTypes};
@@ -32,6 +33,8 @@ impl BuckDB {
             is_shard_active: false,
         }
     }
+
+    ///////// Transaction /////////
 
     pub fn begin_transaction(&mut self) -> Result<BuckLog, ()> {
         // clear the uncommitted data to ensure that the transaction is clean
@@ -76,6 +79,8 @@ impl BuckDB {
 
         Err(BuckEngineError::AbortError)
     }
+
+    ///////// Query /////////
 
     /// Insert a key-value pair into the database.
     ///
@@ -170,6 +175,8 @@ impl BuckDB {
         }
     }
 
+    ///////// Sharding /////////
+
     pub fn enable_sharding(&mut self, num_shards: usize) -> Result<BuckLog, ()> {
         self.is_shard_active = true;
 
@@ -198,5 +205,22 @@ impl BuckDB {
         }
 
         Err(BuckEngineError::ShardingNotActive)
+    }
+
+    ///////// Type /////////
+    
+    /// Get the type of a value in the database.
+    pub fn type_of(&self, key: &str) -> Result<String, BuckEngineError> {
+        let value = self.get(key)?;
+
+        match value {
+            BuckTypes::String(_) => Ok("string".to_owned()),
+            BuckTypes::Integer(_) => Ok("integer".to_owned()),
+            BuckTypes::Float(_) => Ok("float".to_owned()),
+            BuckTypes::Boolean(_) => Ok("boolean".to_owned()),
+            BuckTypes::Hash(_) => Ok("hash".to_owned()),
+            BuckTypes::Sets(_) => Ok("sets".to_owned()),
+            BuckTypes::Unknown(_) => Ok("unknown".to_owned()),
+        }
     }
 }

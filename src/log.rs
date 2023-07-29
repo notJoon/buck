@@ -10,6 +10,7 @@ pub enum BuckLog {
     TransactionOk,
     RollbackOk,
     BackupOk,
+    TypeOk(String, String),
     ShardingEnableOk,
 }
 
@@ -24,6 +25,7 @@ impl fmt::Display for BuckLog {
             BuckLog::TransactionOk => write!(f, "[log] Transaction committed"),
             BuckLog::RollbackOk => write!(f, "[log] Transaction rolled back"),
             BuckLog::BackupOk => write!(f, "[Success] Database backed up"),
+            BuckLog::TypeOk(key, typ) => write!(f, "[Success] {key}: {typ}"),
             BuckLog::ShardingEnableOk => write!(f, "[Success] Sharding enabled"),
         }
     }

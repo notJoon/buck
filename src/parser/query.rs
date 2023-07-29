@@ -7,6 +7,7 @@ pub enum BuckQuery {
     Update(String, BuckTypes),
     Remove(Vec<String>),
     Shard(usize),
+    Type(String),
     //TODO Commit and Rollback may be take db name as argument
     Commit,
     Rollback,
@@ -43,6 +44,11 @@ impl BuckQuery {
                 db.update(&key, value).unwrap();
 
                 Ok(BuckLog::UpdateOk(query.to_owned()))
+            }
+            BuckQuery::Type(key) => {
+                let typ = db.type_of(&key).unwrap();
+
+                Ok(BuckLog::TypeOk(key, typ.to_string()))
             }
             BuckQuery::Commit => {
                 db.commit().unwrap();
