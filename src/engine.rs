@@ -209,6 +209,25 @@ impl BuckDB {
 
     ///////// Type /////////
     
+    /// push a value to the list
+    pub fn l_push(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
+        if self.status == TransactionStatus::Committed {
+            self.status = TransactionStatus::Uncommitted;
+        }
+
+        if self.is_shard_active {
+            self.with_shard(&key, |shard| shard.insert(key.clone(), value.clone()))?;
+        }
+
+        match self.uncommitted_data.get_mut(&key) {
+            Some(BuckTypes::List(list)) => {
+                list.push(value);
+                Ok(BuckLog::InsertOk(key))
+            },
+            _ => Err(BuckEngineError::KeyNotFound(key.to_owned())),
+        }
+    }
+    
     /// Get the type of a value in the database.
     pub fn type_of(&self, key: &str) -> Result<String, BuckEngineError> {
         let value = self.get(key)?;

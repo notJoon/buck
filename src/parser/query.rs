@@ -9,6 +9,8 @@ pub enum BuckQuery {
     Remove(Vec<String>),
     Shard(usize),
     Type(String),
+    // list things
+    Lpush(String, Vec<BuckTypes>),
     //TODO Commit and Rollback may be take db name as argument
     Commit,
     Rollback,
@@ -69,6 +71,16 @@ impl BuckQuery {
 
                 Ok(BuckLog::ShardingEnableOk)
             }
+
+            // list things
+            BuckQuery::Lpush(key, values) => {
+                for value in values {
+                    db.l_push(key.clone(), value).unwrap();
+                }
+
+                Ok(BuckLog::InsertOk(query.to_owned()))
+            }
+
             _ => {
                 unimplemented!("Not implemented yet")
             }

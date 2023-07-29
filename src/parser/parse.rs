@@ -59,6 +59,35 @@ fn get_invalid_keys(keys: Vec<String>) -> Vec<String> {
         .collect::<Vec<String>>()
 }
 
+fn parse_range(input: &str) -> Result<Vec<BuckTypes>, BuckParserError> {
+    if input.contains("..") {
+        let parts = input.split("..").collect::<Vec<&str>>();
+
+        if parts.len() != 2 {
+            return Err(BuckParserError::InvalidRange(input.to_owned()));
+        }
+
+        let start = parts[0].parse::<i32>().map_err(|_| {
+            BuckParserError::InvalidRange(format!("Invalid start value: {}", parts[0]))
+        })?;
+
+        let end = parts[1].parse::<i32>().map_err(|_| {
+            BuckParserError::InvalidRange(format!("Invalid end value: {}", parts[1]))
+        })?;
+
+        let values = (start..end).map(|i| BuckTypes::Integer(i as i64)).collect();
+
+        return Ok(values);
+    }
+
+    let values: Vec<BuckTypes> = input
+        .split(' ')
+        .map(|s| get_value_type(s))
+        .collect::<Result<Vec<BuckTypes>, BuckParserError>>()?;
+
+    Ok(values)
+}
+
 pub fn parse_query(query: &str) -> BuckParserResult {
     let parts: Vec<&str> = query.splitn(2, ' ').collect();
 
@@ -108,7 +137,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
                     if value.contains(' ') {
                         match buck_type {
-                            BuckTypes::String(_) | BuckTypes::Hash(_) | BuckTypes::Sets(_) => {}
+                            BuckTypes::String(_) | BuckTypes::Hash(_) | BuckTypes::Sets(_) | BuckTypes::List(_) => {}
                             _ => {
                                 return Err(BuckParserError::UpdateValueContainsSpace(
                                     value.to_string(),
@@ -158,6 +187,26 @@ pub fn parse_query(query: &str) -> BuckParserResult {
                 }
 
                 return Ok(BuckQuery::Type(key.to_string()));
+            }
+
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+        }
+
+        // list things
+        Some(&"lpush") => {
+            // lpush key value1 value2 ...
+            if let Some(key) = parts.get(1) {
+                let key_value: Vec<&str> = key.splitn(2, ' ').collect();
+
+                if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
+                    if !is_valid_key(key) {
+                        return Err(BuckParserError::InvalidKey(key.to_string()));
+                    }
+
+                    let values: Vec<BuckTypes> = parse_range(value)?;
+
+                    return Ok(BuckQuery::Lpush(key.to_string(), values));
+                }
             }
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))

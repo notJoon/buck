@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::types::BuckTypes;
+use super::{types::BuckTypes, errors::BuckTypeError};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct BuckList {
@@ -12,12 +12,30 @@ impl BuckList {
         Default::default()
     }
 
-    pub fn b_push(&mut self, key: &str, value: BuckTypes) {
-        unimplemented!("b_push")
+    pub fn push(&mut self, value: BuckTypes) {
+        self.data.insert(0, value);
     }
 
-    pub fn b_pop(&mut self, key: &str) -> Option<BuckTypes> {
-        unimplemented!("b_pop")
+    pub fn pop(&mut self, pos: &str) -> Result<Option<BuckTypes>, BuckTypeError> {
+        if self.data.is_empty() {
+            return Err(BuckTypeError::ListIsEmpty);
+        }
+
+        match pos {
+            "head" => {
+                let pop_head = self.data.remove(0);
+                Ok(Some(pop_head))
+            },
+            "tail" => {
+                let pop_tail = self.data.pop();
+                Ok(pop_tail)
+            },
+            _ => Err(BuckTypeError::UnknownCommand(pos.to_owned())),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
     }
 }
 

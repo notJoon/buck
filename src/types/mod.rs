@@ -1,2 +1,3 @@
 pub mod types;
-mod list;
+pub mod list;
+pub mod errors;

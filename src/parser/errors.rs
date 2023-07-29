@@ -8,6 +8,7 @@ pub enum BuckParserError {
     HashKeyIsEmpty(String),
     HashValueIsEmpty(String),
     InvalidSetString(String),
+    InvalidRange(String),
     UpdateValueContainsSpace(String),
 }
 
@@ -27,6 +28,9 @@ impl fmt::Display for BuckParserError {
             }
             BuckParserError::InvalidSetString(set) => {
                 write!(f, "[Error] Invalid set string: {}", set)
+            }
+            BuckParserError::InvalidRange(range) => {
+                write!(f, "[Error] Invalid range: {}", range)
             }
             BuckParserError::UpdateValueContainsSpace(key) => {
                 write!(f, "[Error] Update query value contains space: {}", key)
