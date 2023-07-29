@@ -4,7 +4,7 @@ mod buck_type_tests {
 
     use buck::parser::errors::BuckParserError;
     use buck::parser::parse::get_value_type;
-    use buck::types::{parse_hash, parse_sets, BuckTypes};
+    use buck::types::types::{parse_hash, parse_sets, BuckTypes};
 
     #[test]
     fn test_type_inference() {

@@ -4,8 +4,9 @@ mod db_test {
         engine::{BuckDB, TransactionStatus},
         errors::BuckEngineError,
         log::BuckLog,
-        types::BuckTypes,
     };
+
+    use buck::types::types::BuckTypes;
 
     #[test]
     fn test_insert_remove() {

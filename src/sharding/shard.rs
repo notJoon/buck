@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 
-use crate::{errors::BuckEngineError, log::BuckLog, types::BuckTypes};
+use crate::{errors::BuckEngineError, log::BuckLog};
+use crate::types::types::BuckTypes;
 
 #[derive(Debug, Clone, Default)]
 pub struct BuckDBShard {

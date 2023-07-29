@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, HashMap};
 
-use crate::parser::parse::get_value_type;
 use crate::sharding::hash::calculate_hash;
 use crate::sharding::shard::BuckDBShard;
-use crate::{errors::BuckEngineError, log::BuckLog, types::BuckTypes};
+use crate::{errors::BuckEngineError, log::BuckLog};
+use crate::types::types::BuckTypes;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum TransactionStatus {
@@ -218,6 +218,7 @@ impl BuckDB {
             BuckTypes::Integer(_) => Ok("integer".to_owned()),
             BuckTypes::Float(_) => Ok("float".to_owned()),
             BuckTypes::Boolean(_) => Ok("boolean".to_owned()),
+            BuckTypes::List(_) => Ok("list".to_owned()),
             BuckTypes::Hash(_) => Ok("hash".to_owned()),
             BuckTypes::Sets(_) => Ok("sets".to_owned()),
             BuckTypes::Unknown(_) => Ok("unknown".to_owned()),
