@@ -9,6 +9,7 @@ pub enum BuckEngineError {
     AbortError,
     ShardingNotActive,
     Unknown,
+    LengthNotSupported(String),
 }
 
 impl fmt::Display for BuckEngineError {
@@ -20,6 +21,7 @@ impl fmt::Display for BuckEngineError {
             BuckEngineError::NoBackup => write!(f, "[Error] No backup"),
             BuckEngineError::AbortError => write!(f, "[Error] Abort failed"),
             BuckEngineError::ShardingNotActive => write!(f, "[Error] Sharding not active"),
+            BuckEngineError::LengthNotSupported(typ) => write!(f, "[Error] Length not supported for type: {}", typ),
             BuckEngineError::Unknown => write!(f, "[Error] Unknown error"),
         }
     }

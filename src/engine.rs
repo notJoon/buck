@@ -227,6 +227,44 @@ impl BuckDB {
             _ => Err(BuckEngineError::KeyNotFound(key.to_owned())),
         }
     }
+
+    pub fn l_pop(&mut self, key: &str) -> Result<BuckLog, BuckEngineError> {
+        if self.status == TransactionStatus::Committed {
+            self.status = TransactionStatus::Uncommitted;
+        }
+
+        if self.is_shard_active {
+            self.with_shard(key, |shard| shard.remove(key))?;
+        }
+
+        match self.uncommitted_data.get_mut(key) {
+            Some(BuckTypes::List(list)) => {
+                let value = list.pop().unwrap();
+                Ok(BuckLog::ListPopOk(value.unwrap().to_string()))
+            },
+            _ => Err(BuckEngineError::KeyNotFound(key.to_owned())),
+        }
+    }
+
+    pub fn get_collections_length(&self, key: String) -> Result<usize, BuckEngineError> {
+        match self.status {
+            TransactionStatus::Uncommitted => match self.uncommitted_data.get(&key) {
+                Some(BuckTypes::List(list)) => Ok(list.len()),
+                Some(BuckTypes::Hash(hash)) => Ok(hash.len()),
+                Some(BuckTypes::Sets(set)) => Ok(set.len()),
+                Some(BuckTypes::String(string)) => Ok(string.len()),
+                _ => Err(BuckEngineError::LengthNotSupported(key.to_owned())),
+            }
+            TransactionStatus::Committed => match self.data.get(&key) {
+                Some(BuckTypes::List(list)) => Ok(list.len()),
+                Some(BuckTypes::Hash(hash)) => Ok(hash.len()),
+                Some(BuckTypes::Sets(set)) => Ok(set.len()),
+                Some(BuckTypes::String(string)) => Ok(string.len()),
+                _ => Err(BuckEngineError::LengthNotSupported(key.to_owned())),
+            }
+            _ => Err(BuckEngineError::AbortError),
+        }
+    }
     
     /// Get the type of a value in the database.
     pub fn type_of(&self, key: &str) -> Result<String, BuckEngineError> {
