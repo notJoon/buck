@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use crate::sharding::hash::calculate_hash;
 use crate::sharding::shard::BuckDBShard;
+use crate::types::list::BuckList;
 use crate::{errors::BuckEngineError, log::BuckLog};
 use crate::types::types::BuckTypes;
 
@@ -209,7 +210,11 @@ impl BuckDB {
 
     ///////// Type /////////
     
-    /// push a value to the list
+    /// Insert all the specified values at the head of the list stored at `key`.
+    /// 
+    /// `LPUSH key element | start...end`
+    /// 
+    /// if `key` does not exist, it is create as empty list before performing the push operations.
     pub fn l_push(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
         if self.status == TransactionStatus::Committed {
             self.status = TransactionStatus::Uncommitted;
@@ -217,6 +222,15 @@ impl BuckDB {
 
         if self.is_shard_active {
             self.with_shard(&key, |shard| shard.insert(key.clone(), value.clone()))?;
+        }
+
+        // if key does not exist, create a new list
+        if !self.uncommitted_data.contains_key(&key) {
+            let mut list = BuckList::new();
+            list.push(value);
+            self.uncommitted_data.insert(key.clone(), BuckTypes::List(list));
+
+            return Ok(BuckLog::InsertOk(key));
         }
 
         match self.uncommitted_data.get_mut(&key) {
@@ -228,6 +242,7 @@ impl BuckDB {
         }
     }
 
+    /// Removes and returns the first element of the list stored at `key`.
     pub fn l_pop(&mut self, key: &str) -> Result<BuckLog, BuckEngineError> {
         if self.status == TransactionStatus::Committed {
             self.status = TransactionStatus::Uncommitted;

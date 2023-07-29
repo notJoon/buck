@@ -12,6 +12,7 @@ pub enum BuckQuery {
     // list things
     Lpush(String, Vec<BuckTypes>),
     Lpop(String),
+    // for all collection types
     Len(String),
     //TODO Commit and Rollback may be take db name as argument
     Commit,
@@ -90,7 +91,7 @@ impl BuckQuery {
             BuckQuery::Len(key) => {
                 let length = db.get_collections_length(key.clone()).unwrap();
 
-                Ok(BuckLog::LengthOk(key, length))
+                Ok(BuckLog::LengthOk(length))
             }
             _ => {
                 unimplemented!("Not implemented yet")
