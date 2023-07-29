@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use crate::sharding::hash::calculate_hash;
 use crate::sharding::shard::BuckDBShard;
+use crate::types::list::BuckList;
 use crate::{errors::BuckEngineError, log::BuckLog};
 use crate::types::types::BuckTypes;
 
@@ -209,7 +210,11 @@ impl BuckDB {
 
     ///////// Type /////////
     
-    /// push a value to the list
+    /// Insert all the specified values at the head of the list stored at `key`.
+    /// 
+    /// `LPUSH key element | start...end`
+    /// 
+    /// if `key` does not exist, it is create as empty list before performing the push operations.
     pub fn l_push(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
         if self.status == TransactionStatus::Committed {
             self.status = TransactionStatus::Uncommitted;
@@ -219,12 +224,60 @@ impl BuckDB {
             self.with_shard(&key, |shard| shard.insert(key.clone(), value.clone()))?;
         }
 
+        // if key does not exist, create a new list
+        if !self.uncommitted_data.contains_key(&key) {
+            let mut list = BuckList::new();
+            list.push(value);
+            self.uncommitted_data.insert(key.clone(), BuckTypes::List(list));
+
+            return Ok(BuckLog::InsertOk(key));
+        }
+
         match self.uncommitted_data.get_mut(&key) {
             Some(BuckTypes::List(list)) => {
                 list.push(value);
                 Ok(BuckLog::InsertOk(key))
             },
             _ => Err(BuckEngineError::KeyNotFound(key.to_owned())),
+        }
+    }
+
+    /// Removes and returns the first element of the list stored at `key`.
+    pub fn l_pop(&mut self, key: &str) -> Result<BuckLog, BuckEngineError> {
+        if self.status == TransactionStatus::Committed {
+            self.status = TransactionStatus::Uncommitted;
+        }
+
+        if self.is_shard_active {
+            self.with_shard(key, |shard| shard.remove(key))?;
+        }
+
+        match self.uncommitted_data.get_mut(key) {
+            Some(BuckTypes::List(list)) => {
+                let value = list.pop().unwrap();
+                Ok(BuckLog::ListPopOk(value.unwrap().to_string()))
+            },
+            _ => Err(BuckEngineError::KeyNotFound(key.to_owned())),
+        }
+    }
+
+    pub fn get_collections_length(&self, key: String) -> Result<usize, BuckEngineError> {
+        match self.status {
+            TransactionStatus::Uncommitted => match self.uncommitted_data.get(&key) {
+                Some(BuckTypes::List(list)) => Ok(list.len()),
+                Some(BuckTypes::Hash(hash)) => Ok(hash.len()),
+                Some(BuckTypes::Sets(set)) => Ok(set.len()),
+                Some(BuckTypes::String(string)) => Ok(string.len()),
+                _ => Err(BuckEngineError::LengthNotSupported(key.to_owned())),
+            }
+            TransactionStatus::Committed => match self.data.get(&key) {
+                Some(BuckTypes::List(list)) => Ok(list.len()),
+                Some(BuckTypes::Hash(hash)) => Ok(hash.len()),
+                Some(BuckTypes::Sets(set)) => Ok(set.len()),
+                Some(BuckTypes::String(string)) => Ok(string.len()),
+                _ => Err(BuckEngineError::LengthNotSupported(key.to_owned())),
+            }
+            _ => Err(BuckEngineError::AbortError),
         }
     }
     
