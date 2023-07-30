@@ -7,7 +7,9 @@ pub enum BuckParserError {
     InvalidKey(String),
     HashKeyIsEmpty(String),
     HashValueIsEmpty(String),
-    InvalidSetString(String),
+    HashValueIsNotInteger(String),
+    // InvalidSetString(String),
+    InvalidSetType(String),
     InvalidRange(String),
     UpdateValueContainsSpace(String),
 }
@@ -26,8 +28,14 @@ impl fmt::Display for BuckParserError {
             BuckParserError::HashValueIsEmpty(hash) => {
                 write!(f, "[Error] Invalid hash string. Key {} has no value", hash)
             }
-            BuckParserError::InvalidSetString(set) => {
-                write!(f, "[Error] Invalid set string: {}", set)
+            BuckParserError::HashValueIsNotInteger(key) => {
+                write!(f, "[Error] Hash value is not integer: {}", key)
+            }
+            // BuckParserError::InvalidSetString(set) => {
+            //     write!(f, "[Error] Invalid set string: {}", set)
+            // }
+            BuckParserError::InvalidSetType(set) => {
+                write!(f, "[Error] Invalid set type: {}", set)
             }
             BuckParserError::InvalidRange(range) => {
                 write!(f, "[Error] Invalid range: {}", range)
