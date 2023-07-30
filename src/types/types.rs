@@ -1,10 +1,13 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt;
+use std::hash::{Hasher, Hash};
 
 use crate::parser::errors::BuckParserError;
 use crate::parser::parse::get_value_type;
 
+use super::hash::BuckHash;
 use super::list::BuckList;
+use super::sets::{BuckSets, Setable};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BuckTypes {
@@ -13,8 +16,8 @@ pub enum BuckTypes {
     Float(f64),
     Boolean(bool),
     List(BuckList),
-    Hash(HashMap<String, BuckTypes>),
-    Sets(HashSet<String>),
+    Hash(BuckHash),
+    Sets(BuckSets),
     Unknown(String),
 }
 
@@ -30,7 +33,7 @@ pub fn parse_list(list_input: &str) -> Result<BuckList, BuckParserError> {
     Ok(list)
 }
 
-pub fn parse_hash(hash_input: &str) -> Result<HashMap<String, BuckTypes>, BuckParserError> {
+pub fn parse_hash(hash_input: &str) -> Result<BuckHash, BuckParserError> {
     let hash_input = hash_input.replace(' ', "");
 
     // expect input -> key1:value1,key2:value2, ...
@@ -52,17 +55,33 @@ pub fn parse_hash(hash_input: &str) -> Result<HashMap<String, BuckTypes>, BuckPa
         hash.insert(kv[0].to_owned(), value);
     }
 
-    Ok(hash)
+    Ok(BuckHash { data: hash })
 }
 
-pub fn parse_sets(set_input: &str) -> Result<HashSet<String>, BuckParserError> {
-    let set = set_input
-        .replace(' ', "")
-        .split(',')
-        .map(|s| s.to_owned())
-        .collect::<HashSet<String>>();
+pub fn parse_sets(set_input: &str) -> Result<BuckSets, BuckParserError> {
+    let set_input = set_input.replace(' ', "");
 
-    Ok(set)
+    // expect input -> value1,value2, ...
+    let mut set = HashSet::new();
+    for value in set_input.split(',') {
+        // insert value into set which type is Setable
+        match get_value_type(value)? {
+            BuckTypes::Integer(ival) => {
+                set.insert(Setable::Integer(ival));
+            }
+            BuckTypes::Boolean(bval) => {
+                set.insert(Setable::Boolean(bval));
+            }
+            BuckTypes::String(sval) => {
+                set.insert(Setable::String(sval));
+            }
+            _ => {
+                return Err(BuckParserError::InvalidSetType(value.to_owned()));
+            }
+        }
+    }
+
+    Ok(BuckSets { data: set })
 }
 
 impl fmt::Display for BuckTypes {
@@ -82,16 +101,16 @@ impl fmt::Display for BuckTypes {
             }
             BuckTypes::Hash(hval) => {
                 let mut hash_string = String::new();
-                for (key, value) in hval {
-                    hash_string.push_str(&format!("{}:{},", key, value));
+                for (key, value) in hval.data.iter() {
+                    hash_string.push_str(&format!("{}: {}\n", key, value));
                 }
 
                 write!(f, "{}", hash_string)
             }
             BuckTypes::Sets(sval) => {
                 let mut set_string = String::new();
-                for value in sval {
-                    set_string.push_str(&format!("{},", value));
+                for (i, item) in sval.data.iter().enumerate() {
+                    set_string.push_str(&format!("{}: {}\n", i, item));
                 }
 
                 write!(f, "{}", set_string)

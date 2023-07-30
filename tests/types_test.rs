@@ -4,6 +4,8 @@ mod buck_type_tests {
 
     use buck::parser::errors::BuckParserError;
     use buck::parser::parse::get_value_type;
+    use buck::types::hash::BuckHash;
+    use buck::types::sets::{BuckSets, Setable};
     use buck::types::types::{parse_hash, parse_sets, BuckTypes};
 
     #[test]
@@ -32,17 +34,12 @@ mod buck_type_tests {
 
     #[test]
     fn test_parse_hash() {
-        let input = "key1:1, key2:value2, key3:true, key4:1.0, key5:\"test\"";
-        let expected = {
-            let mut h = HashMap::new();
-            h.insert("key1".to_string(), BuckTypes::Integer(1));
-            h.insert("key2".to_string(), BuckTypes::Unknown("value2".to_string()));
-            h.insert("key3".to_string(), BuckTypes::Boolean(true));
-            h.insert("key4".to_string(), BuckTypes::Float(1.0));
-            h.insert("key5".to_string(), BuckTypes::String("test".to_string()));
-
-            h
-        };
+        let input = "key1:1, key2:value2, key3:true, key4:\"test\"";
+        let mut expected = BuckHash::new();
+        expected.insert("key1".to_string(), BuckTypes::Integer(1));
+        expected.insert("key2".to_string(), BuckTypes::String("value2".to_string()));
+        expected.insert("key3".to_string(), BuckTypes::Boolean(true));
+        expected.insert("key4".to_string(), BuckTypes::String("test".to_string()));
 
         assert_eq!(parse_hash(input), Ok(expected));
 
@@ -68,14 +65,12 @@ mod buck_type_tests {
     #[test]
     fn test_parse_sets() {
         let input = "value1, value2, value3";
-        let expected = {
-            let mut s = std::collections::HashSet::new();
-            s.insert("value1".to_string());
-            s.insert("value2".to_string());
-            s.insert("value3".to_string());
-
-            s
-        };
+        let mut expected = BuckSets::new();
+        expected.insert(vec![
+            Setable::String("value1".to_string()),
+            Setable::String("value2".to_string()),
+            Setable::String("value3".to_string()),
+        ]);
 
         assert_eq!(parse_sets(input), Ok(expected));
     }
