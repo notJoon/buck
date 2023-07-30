@@ -4,6 +4,8 @@ use crate::types::types::{parse_hash, parse_sets, parse_list, BuckTypes};
 
 use super::{errors::BuckParserError, query::BuckQuery};
 
+use crate::parse_collection_type;
+
 pub type BuckParserResult = Result<BuckQuery, BuckParserError>;
 
 pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
@@ -26,25 +28,22 @@ pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
         "false" => return Ok(BuckTypes::Boolean(false)),
         // string value must be wrapped in double quotes
         _ => {
-            if value.starts_with('"') && value.ends_with('"') {
-                return Ok(BuckTypes::String(value[1..value.len() - 1].into()));
-            }
-
-            if value.starts_with('[') && value.ends_with(']') {
-                return Ok(BuckTypes::List(parse_list(&value[1..value.len() - 1]).unwrap()));
-            }
-
-            if value.starts_with('{') && value.ends_with('}') {
-                return Ok(BuckTypes::Hash(parse_hash(&value[1..value.len() - 1])?));
-            }
-
-            if value.starts_with('(') && value.ends_with(')') {
-                return Ok(BuckTypes::Sets(parse_sets(&value[1..value.len() - 1])?));
-            }
+            parse_collection_type!(value, "[", "]", List, parse_list);
+            parse_collection_type!(value, "{", "}", Hash, parse_hash);
+            parse_collection_type!(value, "(", ")", Sets, parse_sets);
         }
     }
 
     Ok(BuckTypes::Unknown(value.to_owned()))
+}
+
+#[macro_export]
+macro_rules! parse_collection_type {
+    ($value:expr, $start:expr, $end:expr, $type:ident, $parser:ident) => {
+        if $value.starts_with($start) && $value.ends_with($end) {
+            return Ok(BuckTypes::$type($parser(&$value[1..$value.len() - 1])?));
+        }
+    };
 }
 
 fn is_valid_key(key: &str) -> bool {

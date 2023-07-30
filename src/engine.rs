@@ -158,9 +158,9 @@ impl BuckDB {
         match self.status {
             // TODO if apply update to uncommitted data, should change the status to uncommitted
             TransactionStatus::Committed => match self.data.get_mut(key) {
-                Some(val) => {
+                Some(v) => {
                     // exchange the previous value with the new value
-                    *val = value;
+                    *v = value;
                     Ok(BuckLog::UpdateOk(key.to_owned()))
                 }
                 None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
@@ -263,23 +263,21 @@ impl BuckDB {
 
     pub fn get_collections_length(&self, key: String) -> Result<usize, BuckEngineError> {
         match self.status {
-            TransactionStatus::Uncommitted => match self.uncommitted_data.get(&key) {
-                Some(BuckTypes::List(list)) => Ok(list.len()),
-                Some(BuckTypes::Hash(hash)) => Ok(hash.len()),
-                Some(BuckTypes::Sets(set)) => Ok(set.len()),
-                Some(BuckTypes::String(string)) => Ok(string.len()),
-                _ => Err(BuckEngineError::LengthNotSupported(key.to_owned())),
-            }
-            TransactionStatus::Committed => match self.data.get(&key) {
-                Some(BuckTypes::List(list)) => Ok(list.len()),
-                Some(BuckTypes::Hash(hash)) => Ok(hash.len()),
-                Some(BuckTypes::Sets(set)) => Ok(set.len()),
-                Some(BuckTypes::String(string)) => Ok(string.len()),
-                _ => Err(BuckEngineError::LengthNotSupported(key.to_owned())),
-            }
+            TransactionStatus::Uncommitted => self.get_length_from_value(self.uncommitted_data.get(&key), key),
+            TransactionStatus::Committed => self.get_length_from_value(self.data.get(&key), key),
             _ => Err(BuckEngineError::AbortError),
         }
     }
+
+    fn get_length_from_value(&self, value: Option<&BuckTypes>, key: String) -> Result<usize, BuckEngineError> {
+        match value {
+            Some(BuckTypes::List(list)) => Ok(list.len()),
+            Some(BuckTypes::Hash(hash)) => Ok(hash.len()),
+            Some(BuckTypes::Sets(set)) => Ok(set.len()),
+            Some(BuckTypes::String(string)) => Ok(string.len()),
+            _ => Err(BuckEngineError::LengthNotSupported(key.to_owned())),
+        }
+    }    
     
     /// Get the type of a value in the database.
     pub fn type_of(&self, key: &str) -> Result<String, BuckEngineError> {
