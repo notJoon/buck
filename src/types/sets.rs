@@ -5,6 +5,7 @@ pub enum Setable {
     String(String),
     Integer(i64),
     Boolean(bool),
+    Empty,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -30,6 +31,10 @@ impl BuckSets {
     }
 
     pub fn len(&self) -> usize {
+        if self.data.is_empty() {
+            return 0;
+        }
+
         self.data.len()
     }
 
@@ -64,6 +69,7 @@ impl fmt::Display for Setable {
             Setable::String(s) => write!(f, "{}", s),
             Setable::Integer(i) => write!(f, "{}", i),
             Setable::Boolean(b) => write!(f, "{}", b),
+            Setable::Empty => write!(f, "()"),
         }
     }
 }

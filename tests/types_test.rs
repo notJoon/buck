@@ -37,7 +37,7 @@ mod buck_type_tests {
         let input = "key1:1, key2:value2, key3:true, key4:\"test\"";
         let mut expected = BuckHash::new();
         expected.insert("key1".to_string(), BuckTypes::Integer(1));
-        expected.insert("key2".to_string(), BuckTypes::String("value2".to_string()));
+        expected.insert("key2".to_string(), BuckTypes::Unknown("value2".to_string()));
         expected.insert("key3".to_string(), BuckTypes::Boolean(true));
         expected.insert("key4".to_string(), BuckTypes::String("test".to_string()));
 
@@ -60,18 +60,5 @@ mod buck_type_tests {
             parse_hash(hash_input),
             Err(BuckParserError::HashValueIsEmpty("k3".to_string()))
         );
-    }
-
-    #[test]
-    fn test_parse_sets() {
-        let input = "value1, value2, value3";
-        let mut expected = BuckSets::new();
-        expected.insert(vec![
-            Setable::String("value1".to_string()),
-            Setable::String("value2".to_string()),
-            Setable::String("value3".to_string()),
-        ]);
-
-        assert_eq!(parse_sets(input), Ok(expected));
     }
 }

@@ -10,12 +10,12 @@ pub enum BuckQuery {
     Shard(usize),
     Type(String),
     // list things
-    Lpush(String, Vec<BuckTypes>),
-    Lpop(String),
+    LPush(String, Vec<BuckTypes>),
+    LPop(String),
     // sets type things
-    Sadd(String, Vec<BuckTypes>),
-    Srem(String, Vec<BuckTypes>),
-    Sinter(Vec<BuckTypes>),
+    SAdd(String, Vec<BuckTypes>),
+    SRem(String, Vec<BuckTypes>),
+    SInter(String, Vec<String>),
     // for all collection types
     Len(String),
     //TODO Commit and Rollback may be take db name as argument
@@ -80,31 +80,37 @@ impl BuckQuery {
             }
 
             // list things
-            BuckQuery::Lpush(key, values) => {
+            BuckQuery::LPush(key, values) => {
                 for value in values {
                     db.l_push(key.clone(), value).unwrap();
                 }
 
                 Ok(BuckLog::InsertOk(query.to_owned()))
             }
-            BuckQuery::Lpop(key) => {
+            BuckQuery::LPop(key) => {
                 let value = db.l_pop(&key).unwrap();
 
                 Ok(BuckLog::GetOk(format!("{}: {}", key, value)))
             }
             // sets type things
-            BuckQuery::Sadd(key, values) => {
-                unimplemented!("Not implemented yet")
+            BuckQuery::SAdd(key, values) => {
+                for value in values {
+                    db.s_add(key.clone(), value).unwrap();
+                }
+
+                Ok(BuckLog::InsertOk(query.to_owned()))
             }
-            BuckQuery::Srem(key, values) => {
+            BuckQuery::SInter(target, others) => {
+                let target = db.s_inter(target, others.clone()).unwrap();
+                
+                Ok(BuckLog::SetsIntersectionOk(target.to_string(), others))
+            }
+            BuckQuery::SRem(key, values) => {
                 for value in values {
                     db.s_rem(key.clone(), value).unwrap();
                 }
 
                 Ok(BuckLog::RemoveOk(query.to_owned()))
-            }
-            BuckQuery::Sinter(keys) => {
-                unimplemented!()
             }
             BuckQuery::Len(key) => {
                 let length = db.get_collections_length(key.clone()).unwrap();

@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::types::sets::{BuckSets, Setable};
+
 #[derive(Debug, Eq, PartialEq)]
 pub enum BuckLog {
     InsertOk(String),
@@ -14,6 +16,7 @@ pub enum BuckLog {
     BackupOk,
     TypeOk(String, String),
     ShardingEnableOk,
+    SetsIntersectionOk(String, Vec<String>),
 }
 
 impl fmt::Display for BuckLog {
@@ -31,6 +34,9 @@ impl fmt::Display for BuckLog {
             BuckLog::BackupOk => write!(f, "[Success] Database backed up"),
             BuckLog::TypeOk(key, typ) => write!(f, "({typ}) {key}"),
             BuckLog::ShardingEnableOk => write!(f, "[Success] Sharding enabled"),
+            BuckLog::SetsIntersectionOk(key, values) => {
+                write!(f, "({key}) {values:?}", values = values)
+            }
         }
     }
 }

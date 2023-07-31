@@ -34,7 +34,25 @@ impl BuckDBShard {
         }
     }
 
-    pub fn remove_set_value_from_key(
+    pub fn insert_set_value_to_shard(
+        &mut self,
+        key: &str,
+        value: &Setable,
+    ) -> Result<BuckLog, BuckEngineError> {
+        match self.data.get_mut(key) {
+            Some(v) => {
+                if let BuckTypes::Sets(set) = v {
+                    set.insert(&[value.to_owned()]);
+                    return Ok(BuckLog::InsertOk(key.to_owned()));
+                }
+
+                Err(BuckEngineError::KeyNotFound(key.to_owned()))
+            }
+            None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
+        }
+    }
+
+    pub fn remove_set_key_value_from_shard(
         &mut self,
         key: &str,
         value: &Setable,
