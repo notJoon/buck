@@ -1,6 +1,9 @@
 use regex::Regex;
 
-use crate::types::types::{parse_hash, parse_sets, parse_list, BuckTypes};
+use crate::types::{
+    sets::Setable,
+    types::{parse_hash, parse_list, parse_sets, BuckTypes},
+};
 
 use super::{errors::BuckParserError, query::BuckQuery};
 
@@ -140,7 +143,10 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
                     if value.contains(' ') {
                         match buck_type {
-                            BuckTypes::String(_) | BuckTypes::Hash(_) | BuckTypes::Sets(_) | BuckTypes::List(_) => {}
+                            BuckTypes::String(_)
+                            | BuckTypes::Hash(_)
+                            | BuckTypes::Sets(_)
+                            | BuckTypes::List(_) => {}
                             _ => {
                                 return Err(BuckParserError::UpdateValueContainsSpace(
                                     value.to_string(),
@@ -224,6 +230,28 @@ pub fn parse_query(query: &str) -> BuckParserResult {
                 }
 
                 return Ok(BuckQuery::Lpop(key.to_string()));
+            }
+
+            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+        }
+        Some(&"sadd") => {
+            unimplemented!("sadd")
+        }
+        Some(&"srem") => {
+            // srem key value1 value2 ...
+
+            if let Some(key) = parts.get(1) {
+                let key_value: Vec<&str> = key.splitn(2, ' ').collect();
+
+                if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
+                    if !is_valid_key(key) {
+                        return Err(BuckParserError::InvalidKey(key.to_string()));
+                    }
+
+                    let values: Vec<BuckTypes> = parse_range(value)?;
+
+                    return Ok(BuckQuery::Srem(key.to_string(), values));
+                }
             }
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))

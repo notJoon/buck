@@ -23,8 +23,7 @@ mod sharding_tests {
             .unwrap();
         db.insert("k9".to_owned(), BuckTypes::Boolean(true))
             .unwrap();
-        db.insert("k10".to_owned(), BuckTypes::Integer(4))
-            .unwrap();
+        db.insert("k10".to_owned(), BuckTypes::Integer(4)).unwrap();
 
         for i in 0..4 {
             println!("Shard {}: {:?}", i, db.get_shard_data(i));
@@ -37,7 +36,7 @@ mod sharding_tests {
         db.enable_sharding(4).unwrap();
 
         db.insert("k1".to_owned(), BuckTypes::Integer(1)).unwrap();
-        db.insert("k2".to_owned(), BuckTypes::Integer(2)).unwrap(); 
+        db.insert("k2".to_owned(), BuckTypes::Integer(2)).unwrap();
         db.insert("k3".to_owned(), BuckTypes::Integer(3)).unwrap();
         db.insert("k4".to_owned(), BuckTypes::Integer(4)).unwrap();
         db.insert("k5".to_owned(), BuckTypes::Integer(5)).unwrap();

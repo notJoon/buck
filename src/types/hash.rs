@@ -32,7 +32,8 @@ impl BuckHash {
         match self.data.get(key) {
             Some(value) => {
                 if let BuckTypes::Integer(value) = value {
-                    self.data.insert(key.to_owned(), BuckTypes::Integer(value + 1));
+                    self.data
+                        .insert(key.to_owned(), BuckTypes::Integer(value + 1));
                     return Ok(());
                 }
 

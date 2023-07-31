@@ -1,10 +1,12 @@
 use std::collections::{BTreeMap, HashMap};
 
+use crate::parser::parse::get_value_type;
 use crate::sharding::hash::calculate_hash;
 use crate::sharding::shard::BuckDBShard;
 use crate::types::list::BuckList;
-use crate::{errors::BuckEngineError, log::BuckLog};
+use crate::types::sets::Setable;
 use crate::types::types::BuckTypes;
+use crate::{errors::BuckEngineError, log::BuckLog};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum TransactionStatus {
@@ -209,11 +211,11 @@ impl BuckDB {
     }
 
     ///////// Type /////////
-    
+
     /// Insert all the specified values at the head of the list stored at `key`.
-    /// 
+    ///
     /// `LPUSH key element | start...end`
-    /// 
+    ///
     /// if `key` does not exist, it is create as empty list before performing the push operations.
     pub fn l_push(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
         if self.status == TransactionStatus::Committed {
@@ -228,7 +230,8 @@ impl BuckDB {
         if !self.uncommitted_data.contains_key(&key) {
             let mut list = BuckList::new();
             list.push(value);
-            self.uncommitted_data.insert(key.clone(), BuckTypes::List(list));
+            self.uncommitted_data
+                .insert(key.clone(), BuckTypes::List(list));
 
             return Ok(BuckLog::InsertOk(key));
         }
@@ -237,7 +240,7 @@ impl BuckDB {
             Some(BuckTypes::List(list)) => {
                 list.push(value);
                 Ok(BuckLog::InsertOk(key))
-            },
+            }
             _ => Err(BuckEngineError::KeyNotFound(key.to_owned())),
         }
     }
@@ -256,20 +259,109 @@ impl BuckDB {
             Some(BuckTypes::List(list)) => {
                 let value = list.pop().unwrap();
                 Ok(BuckLog::ListPopOk(value.unwrap().to_string()))
-            },
+            }
             _ => Err(BuckEngineError::KeyNotFound(key.to_owned())),
         }
     }
 
+    /// Add the specified members to the set stored at key.
+    /// Specified members that are already a member of this set are ignored.
+    /// If key does not exist, a new set is created before adding the specified members.
+    ///
+    /// An error is returned when the value stored at key is not a set.
+    pub fn s_add(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
+        unimplemented!()
+    }
+
+    /// Remove the specified members from the set stored at key.
+    /// Specified members that are not a member of this set are ignored.
+    ///
+    /// If key does not exist, it is treated as an empty set and this command returns 0.
+    ///
+    /// An error is returned when the value stored at key is not a set.
+    ///
+    /// ## Returns
+    ///
+    /// Integer reply: the number of members that were removed from the set, not including non existing members.
+    pub fn s_rem(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
+        // check value type is `Setable` and wrap it into a `Setable` if it is.
+        let value = match value {
+            BuckTypes::String(string) => Setable::String(string),
+            BuckTypes::Integer(integer) => Setable::Integer(integer),
+            BuckTypes::Boolean(boolean) => Setable::Boolean(boolean),
+            _ => return Err(BuckEngineError::TypeNotSupported(value.to_string())),
+        };
+
+        if self.status == TransactionStatus::Committed {
+            self.status = TransactionStatus::Uncommitted;
+        }
+
+        if self.is_shard_active {
+            self.with_shard(&key, |shard| shard.remove_set_value_from_key(&key, &value))?;
+        }
+
+        match self.uncommitted_data.get_mut(&key) {
+            Some(BuckTypes::Sets(set)) => {
+                set.remove(&[value]);
+                Ok(BuckLog::RemoveOk(key))
+            }
+            _ => Err(BuckEngineError::KeyNotFound(key.to_owned())),
+        }
+    }
+
+    /// Returns the members of the set resulting from the intersection of all the given sets.
+    ///
+    /// For example:
+    ///    - key1: (a, b, c, d)
+    ///    - key2: (c)
+    ///    - key3: (a, c, e)
+    ///    - key1.intersection(key2, key3) -> (c)
+    ///
+    /// Keys that do not exist are considered to be empty sets.
+    /// With one of the keys being an empty set, the resulting set is also empty
+    /// (since set intersection with an empty set always results in an empty set).
+    ///
+    /// ## Returns
+    ///
+    /// Array reply: list with members of the resulting set.
+    pub fn s_inter(
+        &mut self,
+        key: String,
+        others: Vec<String>,
+    ) -> Result<BuckLog, BuckEngineError> {
+        unimplemented!()
+    }
+
+    /// Returns if member is a member of the set stored at key.
+    ///
+    /// ## Returns
+    ///
+    /// `1` if the element is a member of the set.
+    ///
+    /// `0` if the element is not a member of the set, or if key does not exist.
+    pub fn s_is_member(
+        &mut self,
+        key: String,
+        value: BuckTypes,
+    ) -> Result<BuckLog, BuckEngineError> {
+        unimplemented!()
+    }
+
     pub fn get_collections_length(&self, key: String) -> Result<usize, BuckEngineError> {
         match self.status {
-            TransactionStatus::Uncommitted => self.get_length_from_value(self.uncommitted_data.get(&key), key),
+            TransactionStatus::Uncommitted => {
+                self.get_length_from_value(self.uncommitted_data.get(&key), key)
+            }
             TransactionStatus::Committed => self.get_length_from_value(self.data.get(&key), key),
             _ => Err(BuckEngineError::AbortError),
         }
     }
 
-    fn get_length_from_value(&self, value: Option<&BuckTypes>, key: String) -> Result<usize, BuckEngineError> {
+    fn get_length_from_value(
+        &self,
+        value: Option<&BuckTypes>,
+        key: String,
+    ) -> Result<usize, BuckEngineError> {
         match value {
             Some(BuckTypes::List(list)) => Ok(list.len()),
             Some(BuckTypes::Hash(hash)) => Ok(hash.len()),
@@ -277,8 +369,8 @@ impl BuckDB {
             Some(BuckTypes::String(string)) => Ok(string.len()),
             _ => Err(BuckEngineError::LengthNotSupported(key.to_owned())),
         }
-    }    
-    
+    }
+
     /// Get the type of a value in the database.
     pub fn type_of(&self, key: &str) -> Result<String, BuckEngineError> {
         let value = self.get(key)?;

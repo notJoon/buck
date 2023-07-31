@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 
-use crate::{errors::BuckEngineError, log::BuckLog};
+use crate::types::sets::Setable;
 use crate::types::types::BuckTypes;
+use crate::{errors::BuckEngineError, log::BuckLog};
 
 #[derive(Debug, Clone, Default)]
 pub struct BuckDBShard {
@@ -29,6 +30,24 @@ impl BuckDBShard {
     pub fn remove(&mut self, key: &str) -> Result<BuckLog, BuckEngineError> {
         match self.data.remove(key) {
             Some(_) => Ok(BuckLog::RemoveOk(key.to_owned())),
+            None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
+        }
+    }
+
+    pub fn remove_set_value_from_key(
+        &mut self,
+        key: &str,
+        value: &Setable,
+    ) -> Result<BuckLog, BuckEngineError> {
+        match self.data.get_mut(key) {
+            Some(v) => {
+                if let BuckTypes::Sets(set) = v {
+                    set.remove(&[value.to_owned()]);
+                    return Ok(BuckLog::RemoveOk(key.to_owned()));
+                }
+
+                Err(BuckEngineError::KeyNotFound(key.to_owned()))
+            }
             None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
         }
     }

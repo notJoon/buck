@@ -33,14 +33,6 @@ impl BuckSets {
         self.data.len()
     }
 
-    /// Returns the members of the set resulting from the intersection of all the given sets.
-    /// 
-    /// # Examples
-    /// key1: (a, b, c, d)
-    /// key2: (c)
-    /// key3: (a, c, e)
-    /// 
-    /// key1.intersection(key2, key3) -> (c)
     pub fn intersection(&self, other: &[BuckSets]) -> Self {
         let mut result = BuckSets::new();
 

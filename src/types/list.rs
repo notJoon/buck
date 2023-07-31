@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::{types::BuckTypes, errors::BuckTypeError};
+use super::{errors::BuckTypeError, types::BuckTypes};
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct BuckList {

@@ -1,5 +1,5 @@
-use crate::{engine::BuckDB, errors::BuckEngineError, log::BuckLog};
 use crate::types::types::BuckTypes;
+use crate::{engine::BuckDB, errors::BuckEngineError, log::BuckLog};
 
 #[derive(Debug, PartialEq)]
 pub enum BuckQuery {
@@ -12,6 +12,10 @@ pub enum BuckQuery {
     // list things
     Lpush(String, Vec<BuckTypes>),
     Lpop(String),
+    // sets type things
+    Sadd(String, Vec<BuckTypes>),
+    Srem(String, Vec<BuckTypes>),
+    Sinter(Vec<BuckTypes>),
     // for all collection types
     Len(String),
     //TODO Commit and Rollback may be take db name as argument
@@ -87,6 +91,20 @@ impl BuckQuery {
                 let value = db.l_pop(&key).unwrap();
 
                 Ok(BuckLog::GetOk(format!("{}: {}", key, value)))
+            }
+            // sets type things
+            BuckQuery::Sadd(key, values) => {
+                unimplemented!("Not implemented yet")
+            }
+            BuckQuery::Srem(key, values) => {
+                for value in values {
+                    db.s_rem(key.clone(), value).unwrap();
+                }
+
+                Ok(BuckLog::RemoveOk(query.to_owned()))
+            }
+            BuckQuery::Sinter(keys) => {
+                unimplemented!()
             }
             BuckQuery::Len(key) => {
                 let length = db.get_collections_length(key.clone()).unwrap();

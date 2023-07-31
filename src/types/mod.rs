@@ -1,5 +1,5 @@
-pub mod types;
+pub mod errors;
+pub mod hash;
 pub mod list;
 pub mod sets;
-pub mod hash;
-pub mod errors;
+pub mod types;
