@@ -1,3 +1,12 @@
+//! log.rs
+//! 
+//! This module contains the logs that print out to the user when they execute
+//! a command.
+//! 
+//! For example, if the user types `insert key value` into CLI,
+//! BuckDB must print out `[log] key` to the user. Which is constructed by the
+//! BuckLog::InsertOk(String) enum.
+
 use std::fmt;
 
 #[derive(Debug, Eq, PartialEq)]

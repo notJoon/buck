@@ -1,3 +1,24 @@
+//! types.rs
+//!
+//! This module contains the types used by the parser and constructs the
+//! BuckTypes enum, which is used by the parser to determine what type is
+//! being used in the query.
+//! 
+//! For example, if the user types `insert key value`, the parser will
+//! determine that the type of `value` is a string and will insert it into
+//! the database as a string.
+//! 
+//! Type guessing is done by very naive methods:
+//! 
+//! - If the value is surrounded by double quotes, it is a string.
+//! - If the value is a number, it is an integer.
+//! - If the value is a boolean, it is a boolean.
+//! - If the input contains a pair of square brackets, it is a list.
+//! - If the input contains a pair of curly brackets, it is a hash.
+//! - If the input contains a pair of angle brackets, it is a set.
+//! 
+//! If the parser cannot determine the type, it will return an error.
+
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 
