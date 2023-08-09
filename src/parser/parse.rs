@@ -1,11 +1,10 @@
 use regex::Regex;
 
 use crate::types::{
-    sets::Setable,
     types::{parse_hash, parse_list, parse_sets, BuckTypes},
 };
 
-use super::{errors::BuckParserError, query::BuckQuery};
+use super::{errors::BuckParserError, query::BuckQuery, tokens::BuckTokens};
 
 pub type BuckParserResult = Result<BuckQuery, BuckParserError>;
 
@@ -92,11 +91,11 @@ fn parse_range(input: &str) -> Result<Vec<BuckTypes>, BuckParserError> {
 }
 
 pub fn parse_query(query: &str) -> BuckParserResult {
-    let query = query.to_lowercase();
     let parts: Vec<&str> = query.splitn(2, ' ').collect();
+    let command = BuckTokens::from_str(parts[0]);
 
-    match parts.first() {
-        Some(&"get") => {
+    match command {
+        BuckTokens::Get => {
             if let Some(key) = parts.get(1) {
                 let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
 
@@ -112,7 +111,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
         // TODO: handle range operator
-        Some(&"insert") => {
+        BuckTokens::Insert => {
             if let Some(key) = parts.get(1) {
                 let key_value: Vec<&str> = key.splitn(2, ' ').collect();
 
@@ -130,7 +129,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
         // TODO: handle range operator
-        Some(&"update") => {
+        BuckTokens::Update => {
             if let Some(key) = parts.get(1) {
                 let key_value: Vec<&str> = key.splitn(2, ' ').collect();
 
@@ -162,7 +161,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
         // TODO: handle range operator
-        Some(&"remove") => {
+        BuckTokens::Remove => {
             if let Some(key) = parts.get(1) {
                 let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
 
@@ -177,9 +176,9 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        Some(&"commit") => Ok(BuckQuery::Commit),
-        Some(&"rollback") => Ok(BuckQuery::Rollback),
-        Some(&"shard") => {
+        BuckTokens::Commit => Ok(BuckQuery::Commit),
+        BuckTokens::Rollback => Ok(BuckQuery::Rollback),
+        BuckTokens::Shard => {
             if let Some(shard) = parts.get(1) {
                 let n_shard = shard.trim().parse::<usize>();
 
@@ -190,7 +189,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        Some(&"type") => {
+        BuckTokens::Type => {
             if let Some(key) = parts.get(1) {
                 if !is_valid_key(key) {
                     return Err(BuckParserError::InvalidKey(key.to_string()));
@@ -203,7 +202,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
         }
 
         // list things
-        Some(&"lpush") => {
+        BuckTokens::LPush => {
             // lpush key value1 value2 ...
             if let Some(key) = parts.get(1) {
                 let key_value: Vec<&str> = key.splitn(2, ' ').collect();
@@ -221,7 +220,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        Some(&"lpop") => {
+        BuckTokens::LPop => {
             // lpop key
 
             if let Some(key) = parts.get(1) {
@@ -234,7 +233,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        Some(&"sadd") => {
+        BuckTokens::SAdd => {
             // sadd key value1 value2 ... | sadd key (value1, value2, ...) | sadd key value1..value2
 
             if let Some(key) = parts.get(1) {
@@ -262,7 +261,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        Some(&"srem") => {
+        BuckTokens::SRem => {
             // srem key value1 value2 ...
 
             if let Some(key) = parts.get(1) {
@@ -281,7 +280,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        Some(&"sinter") => {
+        BuckTokens::SInter => {
             // sinter key1 key2 ...
 
             if let Some(key) = parts.get(1) {
@@ -298,7 +297,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        Some(&"len") => {
+        BuckTokens::Length => {
             // len key
             if let Some(key) = parts.get(1) {
                 if !is_valid_key(key) {
@@ -310,7 +309,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        Some(&"exit") => Ok(BuckQuery::Exit),
+        BuckTokens::Exit => Ok(BuckQuery::Exit),
         _ => Err(BuckParserError::InvalidQueryCommand(query.to_owned())),
     }
 }
