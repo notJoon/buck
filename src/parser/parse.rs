@@ -93,219 +93,223 @@ pub fn parse_query(query: &str) -> BuckParserResult {
     let command = BuckTokens::from_str(parts[0]);
 
     match command {
-        BuckTokens::Get => {
-            if let Some(key) = parts.get(1) {
-                let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
-
-                let invalid_keys = get_invalid_keys(keys.clone());
-
-                if !invalid_keys.is_empty() {
-                    return Err(BuckParserError::InvalidKey(invalid_keys.join(", ")));
-                }
-
-                return Ok(BuckQuery::Get(keys));
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
-        BuckTokens::Insert => {
-            if let Some(key) = parts.get(1) {
-                let key_value: Vec<&str> = key.splitn(2, ' ').collect();
-
-                if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
-                    if !is_valid_key(key) {
-                        return Err(BuckParserError::InvalidKey(key.to_string()));
-                    }
-
-                    let buck_type = get_value_type(value);
-
-                    return Ok(BuckQuery::Insert(key.to_string(), buck_type?));
-                }
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
-        // TODO: handle range operator
-        BuckTokens::Update => {
-            if let Some(key) = parts.get(1) {
-                let key_value: Vec<&str> = key.splitn(2, ' ').collect();
-
-                if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
-                    if !is_valid_key(key) {
-                        return Err(BuckParserError::InvalidKey(key.to_string()));
-                    }
-
-                    let buck_type = get_value_type(value)?;
-
-                    if value.contains(' ') {
-                        match buck_type {
-                            BuckTypes::String(_)
-                            | BuckTypes::Hash(_)
-                            | BuckTypes::Sets(_)
-                            | BuckTypes::List(_) => {}
-                            _ => {
-                                return Err(BuckParserError::UpdateValueContainsSpace(
-                                    value.to_string(),
-                                ))
-                            }
-                        }
-                    }
-
-                    return Ok(BuckQuery::Update(key.to_string(), buck_type));
-                }
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
-        BuckTokens::Remove => {
-            if let Some(key) = parts.get(1) {
-                let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
-
-                let invalid_keys = get_invalid_keys(keys.clone());
-
-                if !invalid_keys.is_empty() {
-                    return Err(BuckParserError::InvalidKey(invalid_keys.join(", ")));
-                }
-
-                return Ok(BuckQuery::Remove(keys));
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
+        BuckTokens::Get => handle_get(query, parts),
+        BuckTokens::Insert => handle_insert(query, parts),
+        BuckTokens::Update => handle_update(query, parts),
+        BuckTokens::Remove => handle_remove(query, parts),
         BuckTokens::Commit => Ok(BuckQuery::Commit),
         BuckTokens::Rollback => Ok(BuckQuery::Rollback),
-        BuckTokens::Shard => {
-            if let Some(shard) = parts.get(1) {
-                let n_shard = shard.trim().parse::<usize>();
-
-                if let Ok(n_shard) = n_shard {
-                    return Ok(BuckQuery::Shard(n_shard));
-                }
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
-        BuckTokens::Type => {
-            if let Some(key) = parts.get(1) {
-                if !is_valid_key(key) {
-                    return Err(BuckParserError::InvalidKey(key.to_string()));
-                }
-
-                return Ok(BuckQuery::Type(key.to_string()));
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
+        BuckTokens::Shard => handle_shard(query, parts),
+        BuckTokens::Type => handle_type(query, parts),
 
         // list things
-        BuckTokens::LPush => {
-            // lpush key value1 value2 ...
-            if let Some(key) = parts.get(1) {
-                let key_value: Vec<&str> = key.splitn(2, ' ').collect();
-
-                if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
-                    if !is_valid_key(key) {
-                        return Err(BuckParserError::InvalidKey(key.to_string()));
-                    }
-
-                    let values: Vec<BuckTypes> = parse_range(value)?;
-
-                    return Ok(BuckQuery::LPush(key.to_string(), values));
-                }
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
-        BuckTokens::LPop => {
-            // lpop key
-
-            if let Some(key) = parts.get(1) {
-                if !is_valid_key(key) {
-                    return Err(BuckParserError::InvalidKey(key.to_string()));
-                }
-
-                return Ok(BuckQuery::LPop(key.to_string()));
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
-        BuckTokens::SAdd => {
-            // sadd key value1 value2 ... | sadd key (value1, value2, ...) | sadd key value1..value2
-
-            if let Some(key) = parts.get(1) {
-                let key_value: Vec<&str> = key.splitn(2, ' ').collect();
-
-                if key_value.len() == 1 {
-                    // insert empty set
-                    if !is_valid_key(key) {
-                        return Err(BuckParserError::InvalidKey(key.to_string()));
-                    }
-
-                    return Ok(BuckQuery::SAdd(key.to_string(), vec![]));
-                }
-
-                if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
-                    if !is_valid_key(key) {
-                        return Err(BuckParserError::InvalidKey(key.to_string()));
-                    }
-
-                    let values: Vec<BuckTypes> = parse_range(value)?;
-
-                    return Ok(BuckQuery::SAdd(key.to_string(), values));
-                }
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
-        BuckTokens::SRem => {
-            // srem key value1 value2 ...
-
-            if let Some(key) = parts.get(1) {
-                let key_value: Vec<&str> = key.splitn(2, ' ').collect();
-
-                if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
-                    if !is_valid_key(key) {
-                        return Err(BuckParserError::InvalidKey(key.to_string()));
-                    }
-
-                    let values: Vec<BuckTypes> = parse_range(value)?;
-
-                    return Ok(BuckQuery::SRem(key.to_string(), values));
-                }
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
-        BuckTokens::SInter => {
-            // sinter key1 key2 ...
-
-            if let Some(key) = parts.get(1) {
-                let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
-
-                let invalid_keys = get_invalid_keys(keys.clone());
-
-                if !invalid_keys.is_empty() {
-                    return Err(BuckParserError::InvalidKey(invalid_keys.join(", ")));
-                }
-
-                return Ok(BuckQuery::SInter("".to_string(), keys));
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
-        BuckTokens::Length => {
-            // len key
-            if let Some(key) = parts.get(1) {
-                if !is_valid_key(key) {
-                    return Err(BuckParserError::InvalidKey(key.to_string()));
-                }
-
-                return Ok(BuckQuery::Len(key.to_string()));
-            }
-
-            Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
-        }
+        BuckTokens::LPush => handle_lpush(query, parts),
+        BuckTokens::LPop => handle_lpop(query, parts),
+        BuckTokens::SAdd => handle_sadd(query, parts),
+        BuckTokens::SRem => handle_srem(query, parts),
+        BuckTokens::SInter => handle_sinter(query, parts),
+        BuckTokens::Length => handle_length(query, parts),
         BuckTokens::Exit => Ok(BuckQuery::Exit),
         _ => Err(BuckParserError::InvalidQueryCommand(query.to_owned())),
     }
+}
+
+fn handle_get(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
+
+        let invalid_keys = get_invalid_keys(keys.clone());
+
+        if !invalid_keys.is_empty() {
+            return Err(BuckParserError::InvalidKey(invalid_keys.join(", ")));
+        }
+
+        return Ok(BuckQuery::Get(keys));
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_insert(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        let key_value: Vec<&str> = key.splitn(2, ' ').collect();
+
+        if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
+            if !is_valid_key(key) {
+                return Err(BuckParserError::InvalidKey(key.to_string()));
+            }
+
+            let buck_type = get_value_type(value);
+
+            return Ok(BuckQuery::Insert(key.to_string(), buck_type?));
+        }
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_update(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        let key_value: Vec<&str> = key.splitn(2, ' ').collect();
+
+        if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
+            if !is_valid_key(key) {
+                return Err(BuckParserError::InvalidKey(key.to_string()));
+            }
+
+            let buck_type = get_value_type(value)?;
+
+            if value.contains(' ') {
+                match buck_type {
+                    BuckTypes::String(_)
+                    | BuckTypes::Hash(_)
+                    | BuckTypes::Sets(_)
+                    | BuckTypes::List(_) => {}
+                    _ => {
+                        return Err(BuckParserError::UpdateValueContainsSpace(
+                            value.to_string(),
+                        ))
+                    }
+                }
+            }
+
+            return Ok(BuckQuery::Update(key.to_string(), buck_type));
+        }
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_remove(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
+
+        let invalid_keys = get_invalid_keys(keys.clone());
+
+        if !invalid_keys.is_empty() {
+            return Err(BuckParserError::InvalidKey(invalid_keys.join(", ")));
+        }
+
+        return Ok(BuckQuery::Remove(keys));
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_shard(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(shard) = parts.get(1) {
+        let n_shard = shard.trim().parse::<usize>();
+
+        if let Ok(n_shard) = n_shard {
+            return Ok(BuckQuery::Shard(n_shard));
+        }
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_type(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        if !is_valid_key(key) {
+            return Err(BuckParserError::InvalidKey(key.to_string()));
+        }
+
+        return Ok(BuckQuery::Type(key.to_string()));
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_lpush(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        let key_value: Vec<&str> = key.splitn(2, ' ').collect();
+
+        if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
+            if !is_valid_key(key) {
+                return Err(BuckParserError::InvalidKey(key.to_string()));
+            }
+
+            let values: Vec<BuckTypes> = parse_range(value)?;
+
+            return Ok(BuckQuery::LPush(key.to_string(), values));
+        }
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_lpop(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        if !is_valid_key(key) {
+            return Err(BuckParserError::InvalidKey(key.to_string()));
+        }
+
+        return Ok(BuckQuery::LPop(key.to_string()));
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_sadd(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        let key_value: Vec<&str> = key.splitn(2, ' ').collect();
+
+        if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
+            if !is_valid_key(key) {
+                return Err(BuckParserError::InvalidKey(key.to_string()));
+            }
+
+            let values: Vec<BuckTypes> = parse_range(value)?;
+
+            return Ok(BuckQuery::SAdd(key.to_string(), values));
+        }
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_srem(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        let key_value: Vec<&str> = key.splitn(2, ' ').collect();
+
+        if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
+            if !is_valid_key(key) {
+                return Err(BuckParserError::InvalidKey(key.to_string()));
+            }
+
+            let values: Vec<BuckTypes> = parse_range(value)?;
+
+            return Ok(BuckQuery::SRem(key.to_string(), values));
+        }
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_sinter(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();
+
+        let invalid_keys = get_invalid_keys(keys.clone());
+
+        if !invalid_keys.is_empty() {
+            return Err(BuckParserError::InvalidKey(invalid_keys.join(", ")));
+        }
+
+        return Ok(BuckQuery::SInter("".to_string(), keys));
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
+}
+
+fn handle_length(query: &str, parts: Vec<&str>) -> BuckParserResult {
+    if let Some(key) = parts.get(1) {
+        if !is_valid_key(key) {
+            return Err(BuckParserError::InvalidKey(key.to_string()));
+        }
+
+        return Ok(BuckQuery::Len(key.to_string()));
+    }
+
+    Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
 }
