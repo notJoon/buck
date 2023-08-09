@@ -1,8 +1,6 @@
 use regex::Regex;
 
-use crate::types::{
-    types::{parse_hash, parse_list, parse_sets, BuckTypes},
-};
+use crate::types::types::{parse_hash, parse_list, parse_sets, BuckTypes};
 
 use super::{errors::BuckParserError, query::BuckQuery, tokens::BuckTokens};
 
@@ -110,7 +108,6 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        // TODO: handle range operator
         BuckTokens::Insert => {
             if let Some(key) = parts.get(1) {
                 let key_value: Vec<&str> = key.splitn(2, ' ').collect();
@@ -160,7 +157,6 @@ pub fn parse_query(query: &str) -> BuckParserResult {
 
             Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
         }
-        // TODO: handle range operator
         BuckTokens::Remove => {
             if let Some(key) = parts.get(1) {
                 let keys: Vec<String> = key.split(' ').map(|s| s.to_string()).collect();

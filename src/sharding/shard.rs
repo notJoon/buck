@@ -15,7 +15,6 @@ impl BuckDBShard {
     }
 
     pub fn insert(&mut self, key: String, value: BuckTypes) -> Result<BuckLog, BuckEngineError> {
-        print!("shard insert");
         self.data.insert(key.to_owned(), value);
         Ok(BuckLog::InsertOk(key.to_owned()))
     }

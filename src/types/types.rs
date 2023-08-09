@@ -1,6 +1,5 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt;
-use std::hash::{Hash, Hasher};
 
 use crate::parser::errors::BuckParserError;
 use crate::parser::parse::get_value_type;

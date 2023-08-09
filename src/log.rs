@@ -1,7 +1,5 @@
 use std::fmt;
 
-use crate::types::sets::{BuckSets, Setable};
-
 #[derive(Debug, Eq, PartialEq)]
 pub enum BuckLog {
     InsertOk(String),
