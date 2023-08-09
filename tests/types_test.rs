@@ -1,12 +1,10 @@
 #[cfg(test)]
 mod buck_type_tests {
-    use std::collections::HashMap;
-
     use buck::parser::errors::BuckParserError;
     use buck::parser::parse::get_value_type;
     use buck::types::hash::BuckHash;
     use buck::types::sets::{BuckSets, Setable};
-    use buck::types::types::{parse_hash, parse_sets, BuckTypes};
+    use buck::types::types::{BuckTypes, parse_hash};
 
     #[test]
     fn test_type_inference() {

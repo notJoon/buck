@@ -8,7 +8,6 @@ pub enum BuckParserError {
     HashKeyIsEmpty(String),
     HashValueIsEmpty(String),
     HashValueIsNotInteger(String),
-    // InvalidSetString(String),
     InvalidSetType(String),
     InvalidRange(String),
     UpdateValueContainsSpace(String),

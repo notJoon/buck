@@ -1,12 +1,9 @@
 #[cfg(test)]
 mod query_tests {
-    use std::collections::HashMap;
-
     use buck::parser::errors::BuckParserError;
     use buck::parser::parse::parse_query;
     use buck::parser::query::BuckQuery::{Get, Insert, Remove, Update};
     use buck::types::hash::BuckHash;
-    use buck::types::sets::{BuckSets, Setable};
     use buck::types::types::BuckTypes;
 
     #[test]
