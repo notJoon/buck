@@ -1,3 +1,9 @@
+//! tokens.rs
+//! 
+//! This module contains the tokens used by the parser and constructs the
+//! BuckTokens enum, which is used by the parser to determine what command
+//! the user is trying to execute.
+
 pub enum BuckTokens {
     Get,
     Insert,
