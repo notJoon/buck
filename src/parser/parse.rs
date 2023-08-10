@@ -110,6 +110,7 @@ pub fn parse_query(query: &str) -> BuckParserResult {
         BuckTokens::SInter => handle_sinter(query, parts),
         BuckTokens::Length => handle_length(query, parts),
         BuckTokens::Exit => Ok(BuckQuery::Exit),
+        BuckTokens::Clear => Ok(BuckQuery::Clear),
         _ => Err(BuckParserError::InvalidQueryCommand(query.to_owned())),
     }
 }

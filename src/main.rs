@@ -30,15 +30,5 @@ fn main() {
                 eprintln!("[ERROR] Failed to parse query: {}", e)
             }
         };
-
-        match input {
-            "exit" => {
-                std::process::exit(0);
-            }
-            "clear" => {
-                print!("{}[2J", 27 as char);
-            }
-            _ => {}
-        }
     }
 }

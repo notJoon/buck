@@ -24,6 +24,7 @@ pub enum BuckLog {
     TypeOk(String, String),
     ShardingEnableOk,
     SetsIntersectionOk(String, Vec<String>),
+    ClearOk,
 }
 
 impl fmt::Display for BuckLog {
@@ -44,6 +45,7 @@ impl fmt::Display for BuckLog {
             BuckLog::SetsIntersectionOk(key, values) => {
                 write!(f, "({key}) {values:?}", values = values)
             }
+            BuckLog::ClearOk => write!(f, ""),
         }
     }
 }

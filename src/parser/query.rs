@@ -22,6 +22,7 @@ pub enum BuckQuery {
     Commit,
     Rollback,
     Exit,
+    Clear,
     Unknown,
 }
 
@@ -73,6 +74,11 @@ impl BuckQuery {
             BuckQuery::Exit => {
                 std::process::exit(0);
             }
+            BuckQuery::Clear => {
+                print!("{}[2J", 27 as char);
+
+                Ok(BuckLog::ClearOk)
+            },
             BuckQuery::Shard(num_shards) => {
                 db.enable_sharding(num_shards).unwrap();
 
