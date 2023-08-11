@@ -68,4 +68,22 @@ mod hash_method_tests {
 
         assert_eq!(result, Ok(expected));
     }
+
+    #[test]
+    fn test_value_contains_whitespace() {
+        let query = "hset bike1 model:Deimos brand:Ergonom type:'Enduro bikes' price:4972";
+        let result = parse_query(query);
+
+        let expected = BuckQuery::HSet(
+            "bike1".to_string(),
+            HashMap::from([
+                ("model".to_string(), BuckTypes::Unknown("Deimos".to_string())),
+                ("brand".to_string(), BuckTypes::Unknown("Ergonom".to_string())),
+                ("type".to_string(), BuckTypes::Unknown("Enduro bikes".to_string())),
+                ("price".to_string(), BuckTypes::Integer(4972)),
+            ]),
+        );
+
+        assert_eq!(result, Ok(expected));
+    }
 }

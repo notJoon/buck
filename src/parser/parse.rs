@@ -89,6 +89,49 @@ fn parse_range(input: &str) -> Result<Vec<BuckTypes>, BuckParserError> {
     Ok(values)
 }
 
+fn parse_fields(value: &str) -> Result<HashMap<String, BuckTypes>, BuckParserError> {
+    let mut parsed_fields: HashMap<String, BuckTypes> = HashMap::new();
+    let mut field_start = 0;
+    let mut inside_string = false;
+    let mut string_delimiter = '\0';
+    let chars: Vec<char> = value.chars().collect();
+
+    for (i, c) in chars.iter().enumerate() {
+        if ['\'', '\"'].contains(c) {
+            if inside_string && *c == string_delimiter {
+                inside_string = false;
+            } else if !inside_string {
+                inside_string = true;
+                string_delimiter = *c;
+            }
+        }
+
+        if !inside_string && *c == ' ' || i == chars.len() - 1 {
+            let field_kv = chars[field_start..=i].iter().collect::<String>();
+            let field_kv_pair: Vec<&str> = field_kv.splitn(2, ':').collect();
+
+            if let (Some(name), Some(value)) = (field_kv_pair.first(), field_kv_pair.get(1)) {
+                if !is_valid_key(name) {
+                    return Err(BuckParserError::InvalidKey(name.to_string()));
+                }
+
+                let cleaned_value = if value.ends_with(' ') {
+                    &value[..value.len() - 1]
+                } else {
+                    value
+                };
+
+                let value = get_value_type(cleaned_value)?;
+                parsed_fields.insert(name.to_string(), value);
+            }
+
+            field_start = i + 1;
+        }
+    }
+
+    Ok(parsed_fields)
+}
+
 pub fn parse_query(query: &str) -> BuckParserResult {
     let parts: Vec<&str> = query.splitn(2, ' ').collect();
     let command = BuckTokens::from_str(parts[0]);
@@ -317,37 +360,16 @@ fn handle_length(query: &str, parts: Vec<&str>) -> BuckParserResult {
     Err(BuckParserError::InvalidQueryCommand(query.to_owned()))
 }
 
-// hset bike1 model:Deimos brand:Ergonom type:'Enduro bikes' price:4972
 fn handle_hset(query: &str, parts: Vec<&str>) -> BuckParserResult {
     if let Some(key) = parts.get(1) {
         let key_value: Vec<&str> = key.splitn(2, ' ').collect();
-        // >>> [bike1, model:Deimos brand:Ergonom type:'Enduro bikes' price:4972]
 
         if let (Some(key), Some(value)) = (key_value.first(), key_value.get(1)) {
             if !is_valid_key(key) {
                 return Err(BuckParserError::InvalidKey(key.to_string()));
             }
 
-            let fields_kv_pair: Vec<&str> = value.split(' ').collect();
-            // >>> [model:Deimos, brand:Ergonom, type:'Enduro bikes', price:4972]
-
-            let mut parsed_fields: HashMap<String, BuckTypes> = HashMap::new();
-
-            for field_kv in fields_kv_pair {
-                let field_kv_pair: Vec<&str> = field_kv.splitn(2, ':').collect();
-                // >>> [model, Deimos], [brand, Ergonom], [type, 'Enduro bikes'], [price, 4972]
-
-                if let (Some(name), Some(value)) = (field_kv_pair.first(), field_kv_pair.get(1)) {
-                    if !is_valid_key(name) {
-                        return Err(BuckParserError::InvalidKey(name.to_string()));
-                    }
-
-                    let value = get_value_type(value)?;
-
-                    parsed_fields.insert(name.to_string(), value);
-                }
-            }
-
+            let parsed_fields = parse_fields(value)?;
             return Ok(BuckQuery::HSet(key.to_string(), parsed_fields));
         }
     }

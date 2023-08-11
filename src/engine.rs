@@ -403,10 +403,10 @@ impl BuckDB {
     /// ## Examples
     /// 
     /// ```
-    /// `HSET myhash field1 "Hello"`
+    /// HSET myhash field1 "Hello"
     /// >>> (integer) 1
     /// 
-    /// `HSET myhash field2 "Hi" field3 "World"`
+    /// HSET myhash field2 "Hi" field3 "World"
     /// >>> (integer) 2
     /// ```
     pub fn h_set(&mut self, key: String, fields: HashMap<String, BuckTypes>) -> Result<BuckLog, BuckEngineError> {
@@ -421,13 +421,15 @@ impl BuckDB {
         match self.uncommitted_data.get_mut(&key) {
             Some(BuckTypes::Hash(hash)) => {
                 hash.hset(fields);
-                Ok(BuckLog::InsertOk(key))
+                let length = hash.data.len();
+                Ok(BuckLog::HSetOk(length))
             }
             None => {
                 let mut hash = BuckHash::new();
                 hash.hset(fields);
-                self.uncommitted_data.insert(key.clone(), BuckTypes::Hash(hash));
-                Ok(BuckLog::InsertOk(key))
+                self.uncommitted_data.insert(key.clone(), BuckTypes::Hash(hash.clone()));
+                let length = hash.data.len();
+                Ok(BuckLog::HSetOk(length))
             }
             _ => Err(BuckEngineError::TypeNotSupported(key.to_owned())),
         }

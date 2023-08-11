@@ -129,8 +129,8 @@ impl BuckQuery {
             }
             BuckQuery::HSet(key, fields) => {
                 db.h_set(key.clone(), fields).unwrap();
-
-                Ok(BuckLog::InsertOk(query.to_owned()))
+                let length = db.get_collections_length(key.clone()).unwrap();
+                Ok(BuckLog::HSetOk(length))
             }
             _ => {
                 unimplemented!("Not implemented yet")
