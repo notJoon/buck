@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use crate::types::sets::Setable;
 use crate::types::types::BuckTypes;
@@ -61,6 +61,24 @@ impl BuckDBShard {
                 if let BuckTypes::Sets(set) = v {
                     set.remove(&[value.to_owned()]);
                     return Ok(BuckLog::RemoveOk(key.to_owned()));
+                }
+
+                Err(BuckEngineError::KeyNotFound(key.to_owned()))
+            }
+            None => Err(BuckEngineError::KeyNotFound(key.to_owned())),
+        }
+    }
+
+    pub fn insert_hash_key_value_to_shard(
+        &mut self,
+        key: &str,
+        fields: HashMap<String, BuckTypes>
+    ) -> Result<BuckLog, BuckEngineError> {
+        match self.data.get_mut(key) {
+            Some(v) => {
+                if let BuckTypes::Hash(hash) = v {
+                    hash.hset(fields);
+                    return Ok(BuckLog::InsertOk(key.to_owned()));
                 }
 
                 Err(BuckEngineError::KeyNotFound(key.to_owned()))

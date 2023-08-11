@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 
 use crate::sharding::hash::calculate_hash;
 use crate::sharding::shard::BuckDBShard;
+use crate::types::hash::BuckHash;
 use crate::types::list::BuckList;
 use crate::types::sets::{Setable, BuckSets};
 use crate::types::types::BuckTypes;
@@ -384,6 +385,52 @@ impl BuckDB {
         value: BuckTypes,
     ) -> Result<BuckLog, BuckEngineError> {
         unimplemented!()
+    }
+
+    /// Push the specified fields to their respective values in the hash stored at key.
+    ///
+    /// This command overwrites the values of specified fields that exist in the hash. 
+    /// If key doesn't exist, a new key holding a hash is created.
+    /// 
+    /// ## Syntax
+    /// 
+    /// >>> `HSET key field:value [field:value ...]`
+    ///
+    /// ## Returns
+    ///
+    ///  Integer reply: The number of fields that were added.
+    /// 
+    /// ## Examples
+    /// 
+    /// ```
+    /// `HSET myhash field1 "Hello"`
+    /// >>> (integer) 1
+    /// 
+    /// `HSET myhash field2 "Hi" field3 "World"`
+    /// >>> (integer) 2
+    /// ```
+    pub fn h_set(&mut self, key: String, fields: HashMap<String, BuckTypes>) -> Result<BuckLog, BuckEngineError> {
+        if self.status == TransactionStatus::Committed {
+            self.status = TransactionStatus::Uncommitted;
+        }
+
+        if self.is_shard_active {
+            self.with_shard(&key, |shard| shard.insert_hash_key_value_to_shard(&key, fields.clone()))?;
+        }
+
+        match self.uncommitted_data.get_mut(&key) {
+            Some(BuckTypes::Hash(hash)) => {
+                hash.hset(fields);
+                Ok(BuckLog::InsertOk(key))
+            }
+            None => {
+                let mut hash = BuckHash::new();
+                hash.hset(fields);
+                self.uncommitted_data.insert(key.clone(), BuckTypes::Hash(hash));
+                Ok(BuckLog::InsertOk(key))
+            }
+            _ => Err(BuckEngineError::TypeNotSupported(key.to_owned())),
+        }
     }
 
     fn is_setable_value(&self, value: BuckTypes) -> Result<Setable, BuckEngineError> {

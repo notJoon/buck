@@ -3,7 +3,6 @@ mod buck_type_tests {
     use buck::parser::errors::BuckParserError;
     use buck::parser::parse::get_value_type;
     use buck::types::hash::BuckHash;
-    use buck::types::sets::{BuckSets, Setable};
     use buck::types::types::{BuckTypes, parse_hash};
 
     #[test]

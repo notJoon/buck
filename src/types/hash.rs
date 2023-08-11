@@ -45,4 +45,23 @@ impl BuckHash {
             }
         }
     }
+
+    pub fn hset(&mut self, fields: HashMap<String, BuckTypes>) {
+        for (key, value) in fields {
+            self.data.insert(key, value);
+        }
+    }
+
+    pub fn hget(&self, key: &str) -> Option<&BuckTypes> {
+        let result = self.data.get(key);
+
+        match result {
+            Some(value) => Some(value),
+            None => None,
+        }
+    }
+
+    pub fn hget_all(&self, key: &str) -> Option<BuckTypes> {
+        unimplemented!("hget_all")
+    }
 }
