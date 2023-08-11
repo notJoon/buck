@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::types::types::BuckTypes;
 use crate::{engine::BuckDB, errors::BuckEngineError, log::BuckLog};
 
@@ -16,6 +18,8 @@ pub enum BuckQuery {
     SAdd(String, Vec<BuckTypes>),
     SRem(String, Vec<BuckTypes>),
     SInter(String, Vec<String>),
+    // hash type things
+    HSet(String, HashMap<String, BuckTypes>),
     // for all collection types
     Len(String),
     //TODO Commit and Rollback may be take db name as argument
@@ -122,6 +126,11 @@ impl BuckQuery {
                 let length = db.get_collections_length(key.clone()).unwrap();
 
                 Ok(BuckLog::LengthOk(length))
+            }
+            BuckQuery::HSet(key, fields) => {
+                db.h_set(key.clone(), fields).unwrap();
+
+                Ok(BuckLog::InsertOk(query.to_owned()))
             }
             _ => {
                 unimplemented!("Not implemented yet")

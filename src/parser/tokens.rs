@@ -20,6 +20,7 @@ pub enum BuckTokens {
     SAdd,
     SRem,
     SInter,
+    HSet,
     Length,
     Unknown,
 }
@@ -44,6 +45,7 @@ impl BuckTokens {
             "sadd" => BuckTokens::SAdd,
             "srem" => BuckTokens::SRem,
             "sinter" => BuckTokens::SInter,
+            "hset" => BuckTokens::HSet,
             "len" => BuckTokens::Length,
             _ => BuckTokens::Unknown,
         }
