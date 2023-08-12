@@ -1,11 +1,29 @@
-use std::{collections::HashSet, fmt};
+use std::{collections::HashSet, fmt, hash::{Hash, Hasher}};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Setable {
     String(String),
     Integer(i64),
+    Float(EqFloat),
     Boolean(bool),
     Empty,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct EqFloat(pub f64);
+
+impl Eq for EqFloat {}
+
+impl Hash for EqFloat {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.to_bits().hash(state);
+    }
+}
+
+impl From<f64> for EqFloat {
+    fn from(value: f64) -> Self {
+        Self(value)
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -69,7 +87,14 @@ impl fmt::Display for Setable {
             Setable::String(s) => write!(f, "{}", s),
             Setable::Integer(i) => write!(f, "{}", i),
             Setable::Boolean(b) => write!(f, "{}", b),
+            Setable::Float(ef) => write!(f, "{}", ef),
             Setable::Empty => write!(f, "()"),
         }
+    }
+}
+
+impl fmt::Display for EqFloat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
