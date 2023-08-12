@@ -27,7 +27,7 @@ pub fn get_value_type(value: &str) -> Result<BuckTypes, BuckParserError> {
         "false" => return Ok(BuckTypes::Boolean(false)),
         // string value must be wrapped in double quotes
         _ => {
-            if value.starts_with('"') && value.ends_with('"') || value.starts_with('\'') && value.ends_with('\'') {
+            if value.starts_with('"') && value.ends_with('"') || value.starts_with("'") && value.ends_with("'") {
                 return Ok(BuckTypes::String(value[1..value.len() - 1].to_owned()));
             }
 
@@ -89,6 +89,8 @@ fn parse_range(input: &str) -> Result<Vec<BuckTypes>, BuckParserError> {
     Ok(values)
 }
 
+// parse fields from a string
+// especially, This method could parse the value which contains whitespace
 fn parse_fields(value: &str) -> Result<HashMap<String, BuckTypes>, BuckParserError> {
     let mut parsed_fields: HashMap<String, BuckTypes> = HashMap::new();
     let mut field_start = 0;
